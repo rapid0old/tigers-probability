@@ -67,10 +67,10 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.3</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.4</div></div></header>
 
 <section class="card">
-  <div id="modelBadge" class="badge warn">ベースラインモデル</div>
+  <div id="modelBadge" class="badge good">2026初期選手モデル</div>
   <div id="attackLabel" class="bigAttack">攻撃側：--</div>
   <div class="row">
     <div><label>対戦相手</label><select id="opponent"></select></div>
@@ -115,7 +115,7 @@ a{color:#b7cfff}
       <div><div class="small" style="margin-top:10px"><b>阪神</b></div><div id="tigersLineup" class="lineupGrid"></div></div>
       <div><div class="small" style="margin-top:10px"><b id="oppLineupTitle">相手</b></div><div id="oppLineup" class="lineupGrid"></div></div>
     </div>
-    <div class="small" style="margin-top:10px">初期値は2026年の打席数が多い選手から自動設定します。実際のスタメン順に直すと、勝率計算に打順が反映されます。</div>
+    <div class="small" style="margin-top:10px">初期値は2026年の出場量が多い選手から自動設定します。実際のスタメン順に直すと、現在打者と打順が確率計算に反映されます。</div>
   </details>
 </section>
 
@@ -137,8 +137,8 @@ a{color:#b7cfff}
 </section>
 
 <section class="card">
-  <span class="badge">2026データ更新</span>
-  <div id="dataStatus" class="dataStatus">選手データ未読込。現在は従来のNPB平均モデルで動作します。</div>
+  <span class="badge">2026データ更新（任意）</span>
+  <div id="dataStatus" class="dataStatus"><strong>初期選手モデルON</strong><br>2026年8月上旬スナップショットを内蔵。CSVなしでそのまま使えます。</div>
   <div class="actionGrid">
     <a class="buttonLink secondary" href="https://proeyekyuu.com/ja/player-batting-stats-jp/" target="_blank" rel="noopener noreferrer">① 打撃データを開く</a>
     <a class="buttonLink secondary" href="https://proeyekyuu.com/ja/player-pitching-stats-jp/" target="_blank" rel="noopener noreferrer">② 投手データを開く</a>
@@ -151,22 +151,23 @@ a{color:#b7cfff}
   <input id="pitFile" type="file" accept=".csv,text/csv" hidden>
   <input id="jsonFile" type="file" accept=".json,application/json" hidden>
   <div class="note" style="margin-top:10px">
-    ProEyeKyuuで「シーズン=2026」に絞ってCSVを書き出し、このアプリに読み込ませます。読み込んだデータはこの端末のブラウザ内だけに保存されます。<br>
-    毎試合後にCSVを入れ直せば、2026年の最新成績に更新できます。あなたが更新後に「母用データ」を書き出せば、お母さん側はそのJSON 1ファイルを読み込むだけです。
+    <b>ここは普段は触らなくてOKです。</b> 初期選手データをアプリ内に同梱しているため、CSVを読み込まなくても選手モデルが動きます。<br>
+    さらに最新化したいときだけ、ProEyeKyuuで「シーズン=2026」に絞った打撃・投手CSVを読み込んでください。読み込んだデータはこの端末のブラウザ内だけに保存され、以後はより詳細な打席イベントモデルへ切り替わります。
   </div>
 </section>
 
 <section class="card">
   <div class="note">
     <b>選手モデルのロジック</b><br>
-    2026年の12球団全体をリーグ基準にし、打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を組み合わせて各打席をシミュレーションします。打席数・対戦打者数が少ない選手はリーグ平均へ縮約し、小標本の暴れを抑えます。<br><br>
-    現在の半イニングでは選択中の投手を使用し、それ以降のイニングはその球団の2026年投手平均を使用します。守備・球場・左右別・対戦相性・代打/継投予測はまだ未反映です。
+    初期状態では、2026年の12球団の主要打者150人・主要投手99人から作った<b>打撃力係数（wOBAベース）</b>と<b>投手係数（FIPベース）</b>を内蔵しています。打席数・投球回が少ない選手ほどリーグ平均へ縮約して、小標本の暴れを抑えています。現在打者から近い3人と現在投手を使って、24状況の得点確率・得点期待値を補正し、残り試合をシミュレーションします。<br><br>
+    任意のCSV更新後は、打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使う<b>詳細打席イベントモデル</b>へ切り替わります。守備・球場・左右別・対戦相性・代打/継投予測はまだ未反映です。
   </div>
 </section>
 
 <footer>
 得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
-2026選手成績：<a href="https://proeyekyuu.com/ja/home-jp/" target="_blank" rel="noopener noreferrer">ProEyeKyuu / プロEYE球</a>。データは利用者がCSVとして端末内に読み込みます。<br>
+初期選手係数：<a href="https://en.baseball-data.jp/" target="_blank" rel="noopener noreferrer">NPB Data Bank</a>の2026公開成績を基に算出。生の成績表は同梱せず、正規化・縮約した係数のみを内蔵しています。<br>
+詳細更新用：<a href="https://proeyekyuu.com/ja/home-jp/" target="_blank" rel="noopener noreferrer">ProEyeKyuu / プロEYE球</a>。<br>
 非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
 </footer>
 </div>
@@ -185,6 +186,21 @@ const TEAMS = [
 const TEAM_NAME = Object.fromEntries(TEAMS);
 const RE = {0:[0.38,0.20,0.07],1:[0.70,0.42,0.19],2:[0.99,0.59,0.27],3:[1.26,0.79,0.40],4:[1.25,0.92,0.33],5:[1.60,1.06,0.42],6:[1.76,1.23,0.48],7:[2.05,1.41,0.66]};
 const RP = {0:[22.2,12.3,4.9],1:[36.3,22.2,10.3],2:[58.7,36.4,19.1],3:[57.3,37.3,21.0],4:[79.8,64.8,23.5],5:[84.5,62.5,24.5],6:[82.4,65.2,23.4],7:[84.0,64.6,29.9]};
+const INITIAL_BATTERS=[{"id":"ib1","team":"Hawks","name":"Ryoya Kurihara","off":1.1853},{"id":"ib2","team":"Buffaloes","name":"Ryoma Nishikawa","off":1.0259},{"id":"ib3","team":"Tigers","name":"森下翔太","off":1.2213},{"id":"ib4","team":"Dragons","name":"Seiya Hosokawa","off":1.0892},{"id":"ib5","team":"Tigers","name":"佐藤輝明","off":1.3},{"id":"ib6","team":"Hawks","name":"Kensuke Kondo","off":1.302},{"id":"ib7","team":"Eagles","name":"Ryosuke Tatsumi","off":1.0741},{"id":"ib8","team":"Fighters","name":"Franmil Reyes","off":1.2482},{"id":"ib9","team":"Dragons","name":"Kaito Muramatsu","off":1.028},{"id":"ib10","team":"Lions","name":"Seiya Watanabe","off":0.9435},{"id":"ib11","team":"Fighters","name":"Tatsuki Mizuno","off":1.0811},{"id":"ib12","team":"Tigers","name":"中野拓夢","off":0.9725},{"id":"ib13","team":"Hawks","name":"Ukyo Shuto","off":1.0038},{"id":"ib14","team":"Tigers","name":"大山悠輔","off":1.1192},{"id":"ib15","team":"Marines","name":"Misho Nishikawa","off":1.0878},{"id":"ib16","team":"Fighters","name":"Chusei Mannami","off":1.1164},{"id":"ib17","team":"BayStars","name":"Keita Sano","off":1.0062},{"id":"ib18","team":"Giants","name":"Bobby Dalbec","off":1.1018},{"id":"ib19","team":"Buffaloes","name":"Yuma Mune","off":0.9633},{"id":"ib20","team":"Eagles","name":"Itsuki Murabayashi","off":0.9871},{"id":"ib21","team":"Carp","name":"Shogo Sakakura","off":1.0608},{"id":"ib22","team":"Carp","name":"Kaito Kozono","off":0.9159},{"id":"ib23","team":"Eagles","name":"Fumiya Kurokawa","off":0.9184},{"id":"ib24","team":"Hawks","name":"Taisei Makihara","off":0.9896},{"id":"ib25","team":"Buffaloes","name":"Keita Nakagawa","off":0.9497},{"id":"ib26","team":"Buffaloes","name":"Kotaro Kurebayashi","off":1.0554},{"id":"ib27","team":"Lions","name":"Natsuo Takizawa","off":1.0202},{"id":"ib28","team":"Fighters","name":"Kotaro Kiyomiya","off":1.0483},{"id":"ib29","team":"Lions","name":"Alexander Canario","off":0.9545},{"id":"ib30","team":"Swallows","name":"Domingo Santana","off":1.1322},{"id":"ib31","team":"Swallows","name":"Hideki Nagaoka","off":0.9524},{"id":"ib32","team":"Carp","name":"Ryosuke Kikuchi","off":0.9408},{"id":"ib33","team":"Buffaloes","name":"Ryo Ota","off":1.0941},{"id":"ib34","team":"Marines","name":"Ryusei Ogawa","off":0.9203},{"id":"ib35","team":"Giants","name":"Shunsuke Urata","off":0.9529},{"id":"ib36","team":"Giants","name":"Yuta Izuguchi","off":0.9714},{"id":"ib37","team":"Eagles","name":"Hideto Asamura","off":0.9647},{"id":"ib38","team":"Giants","name":"Trey Cabbage","off":0.9899},{"id":"ib39","team":"Hawks","name":"Yuki Yanagita","off":1.0381},{"id":"ib40","team":"Swallows","name":"Yukihiro Iwata","off":0.8823},{"id":"ib41","team":"BayStars","name":"Ryuki Watarai","off":1.0263},{"id":"ib42","team":"Fighters","name":"Yuki Nomura","off":1.0348},{"id":"ib43","team":"Marines","name":"Neftali Soto","off":1.0505},{"id":"ib44","team":"Marines","name":"Toshiya Sato","off":1.0527},{"id":"ib45","team":"BayStars","name":"Atsushi Katsumata","off":0.9969},{"id":"ib46","team":"Hawks","name":"Tomoya Masaki","off":1.1694},{"id":"ib47","team":"Giants","name":"Go Matsumoto","off":0.9527},{"id":"ib48","team":"BayStars","name":"Shugo Maki","off":1.2062},{"id":"ib49","team":"Swallows","name":"Shu Masuda","off":1.0497},{"id":"ib50","team":"Fighters","name":"Yuya Gunji","off":0.9772},{"id":"ib51","team":"BayStars","name":"Tatsuo Ebina","off":0.9553},{"id":"ib52","team":"Marines","name":"Kyota Fujiwara","off":1.0907},{"id":"ib53","team":"Dragons","name":"Yuta Ishii","off":0.9991},{"id":"ib54","team":"Carp","name":"Minoru Omori","off":0.8818},{"id":"ib55","team":"Tigers","name":"髙寺望夢","off":0.9406},{"id":"ib56","team":"Marines","name":"Atsuki Tomosugi","off":0.8608},{"id":"ib57","team":"BayStars","name":"Toshiro Miyazaki","off":1.0594},{"id":"ib58","team":"Lions","name":"Tyler Nevin","off":1.1495},{"id":"ib59","team":"Eagles","name":"Daisuke Nakashima","off":1.0077},{"id":"ib60","team":"Lions","name":"Manaya Nishikawa","off":0.8791},{"id":"ib61","team":"Dragons","name":"Hiroki Fukunaga","off":0.997},{"id":"ib62","team":"Carp","name":"Sandro Fabian","off":1.0098},{"id":"ib63","team":"Swallows","name":"Yudai Koga","off":0.9209},{"id":"ib64","team":"Carp","name":"Elehuris Montero","off":1.035},{"id":"ib65","team":"Buffaloes","name":"Tomoya Mori","off":1.0076},{"id":"ib66","team":"Giants","name":"Shunsuke Sasaki","off":1.0392},{"id":"ib67","team":"Marines","name":"Ryusei Terachi","off":0.8141},{"id":"ib68","team":"Dragons","name":"Mikiya Tanaka","off":0.8857},{"id":"ib69","team":"Buffaloes","name":"Ryoma Yamanaka","off":1.0724},{"id":"ib70","team":"Buffaloes","name":"Kenya Wakatsuki","off":0.8632},{"id":"ib71","team":"Carp","name":"Tai Sasaki","off":0.9364},{"id":"ib72","team":"Marines","name":"Koki Yamaguchi","off":1.1747},{"id":"ib73","team":"Swallows","name":"Ryusei Takeoka","off":0.9177},{"id":"ib74","team":"BayStars","name":"Yoshitomo Tsutsugo","off":1.072},{"id":"ib75","team":"BayStars","name":"Shion Matsuo","off":0.97},{"id":"ib76","team":"Swallows","name":"Soma Uchiyama","off":0.9618},{"id":"ib77","team":"Lions","name":"Shinya Hasegawa","off":1.115},{"id":"ib78","team":"Dragons","name":"Takaya Ishikawa","off":1.0509},{"id":"ib79","team":"Fighters","name":"Yua Tamiya","off":0.9681},{"id":"ib80","team":"Dragons","name":"Yuki Okabayashi","off":0.8938},{"id":"ib81","team":"Dragons","name":"Jason Vosler","off":0.8722},{"id":"ib82","team":"Hawks","name":"Takashi Umino","off":0.8519},{"id":"ib83","team":"Giants","name":"Takumi Oshiro","off":1.1094},{"id":"ib84","team":"Eagles","name":"Carson Mccusker","off":1.1521},{"id":"ib85","team":"Swallows","name":"Jose Osuna","off":0.9156},{"id":"ib86","team":"Lions","name":"Masayuki Kuwahara","off":0.9605},{"id":"ib87","team":"Lions","name":"Taiga Kojima","off":0.9402},{"id":"ib88","team":"Carp","name":"Norihiko Nabara","off":0.9668},{"id":"ib89","team":"Lions","name":"Taiga Hirasawa","off":0.973},{"id":"ib90","team":"Eagles","name":"Ryuya Taira","off":1.0032},{"id":"ib91","team":"Lions","name":"Kazunari Ishii","off":0.933},{"id":"ib92","team":"Buffaloes","name":"Haruto Watanabe","off":0.9531},{"id":"ib93","team":"Dragons","name":"Miguel Sano","off":1.0512},{"id":"ib94","team":"Hawks","name":"Tatsuru Yanagimachi","off":0.9652},{"id":"ib95","team":"Swallows","name":"Yoshihiro Akahane","off":0.9315},{"id":"ib96","team":"Tigers","name":"近本光司","off":0.9476},{"id":"ib97","team":"Carp","name":"Taiki Mochimaru","off":0.9555},{"id":"ib98","team":"Lions","name":"Sosuke Genda","off":0.8862},{"id":"ib99","team":"Lions","name":"Anko Rin","off":0.9953},{"id":"ib100","team":"Eagles","name":"Hikaru Ota","off":0.8734},{"id":"ib101","team":"Giants","name":"Yukinori Kishida","off":0.9431},{"id":"ib102","team":"Tigers","name":"坂本誠志郎","off":0.9394},{"id":"ib103","team":"Lions","name":"Yuto Koga","off":1.0839},{"id":"ib104","team":"Fighters","name":"Taiki Narama","off":0.98},{"id":"ib105","team":"Eagles","name":"Naoki Sato","off":1.0069},{"id":"ib106","team":"Buffaloes","name":"Ryoto Kita","off":1.0369},{"id":"ib107","team":"Dragons","name":"Yutaro Itayama","off":1.0199},{"id":"ib108","team":"Hawks","name":"Yudai Shoji","off":0.9059},{"id":"ib109","team":"Dragons","name":"Kosuke Ukai","off":0.9628},{"id":"ib110","team":"Hawks","name":"Hotaka Yamakawa","off":0.9865},{"id":"ib111","team":"Fighters","name":"Rodolfo Castro","off":0.9812},{"id":"ib112","team":"Tigers","name":"熊谷敬宥","off":0.8671},{"id":"ib113","team":"Marines","name":"Gregory Polanco","off":0.9405},{"id":"ib114","team":"BayStars","name":"Cooper Hummel","off":0.9821},{"id":"ib115","team":"Fighters","name":"Shun Mizutani","off":0.9495},{"id":"ib116","team":"BayStars","name":"Asahi Miyashita","off":0.9736},{"id":"ib117","team":"Buffaloes","name":"Bob Seymour","off":0.7899},{"id":"ib118","team":"Tigers","name":"福島圭音","off":0.9414},{"id":"ib119","team":"Giants","name":"Naoki Yoshikawa","off":0.8972},{"id":"ib120","team":"Eagles","name":"Yoshiaki Watanabe","off":0.9808},{"id":"ib121","team":"Carp","name":"Naru Katsuda","off":0.796},{"id":"ib122","team":"Hawks","name":"Kenta Imamiya","off":0.8591},{"id":"ib123","team":"Tigers","name":"木浪聖也","off":0.9121},{"id":"ib124","team":"Carp","name":"Shogo Akiyama","off":1.0059},{"id":"ib125","team":"Hawks","name":"Isami Nomura","off":0.9895},{"id":"ib126","team":"Marines","name":"Akito Takabe","off":0.8517},{"id":"ib127","team":"Marines","name":"Hisanori Yasuda","off":1.0187},{"id":"ib128","team":"Lions","name":"Junichiro Kishi","off":0.8978},{"id":"ib129","team":"Tigers","name":"前川右京","off":1.0436},{"id":"ib130","team":"Eagles","name":"Hiroto Kobukata","off":0.863},{"id":"ib131","team":"BayStars","name":"Masaki Mimori","off":0.9147},{"id":"ib132","team":"BayStars","name":"Yota Kyoda","off":0.9186},{"id":"ib133","team":"Dragons","name":"Toshiki Abe","off":1.0752},{"id":"ib134","team":"Hawks","name":"Hikaru Kawase","off":0.939},{"id":"ib135","team":"Marines","name":"Kyuto Ueda","off":0.9673},{"id":"ib136","team":"Giants","name":"Hayato Sakamoto","off":0.8793},{"id":"ib137","team":"BayStars","name":"Jerar Encarnacion","off":1.0861},{"id":"ib138","team":"Tigers","name":"立石正広","off":0.8465},{"id":"ib139","team":"Giants","name":"Riku Masuda","off":0.9358},{"id":"ib140","team":"Swallows","name":"Kazuya Maruyama","off":1.0777},{"id":"ib141","team":"Swallows","name":"Ryui Ito","off":0.8374},{"id":"ib142","team":"Eagles","name":"Yuya Ogo","off":0.8889},{"id":"ib143","team":"Carp","name":"Ren Hirakawa","off":0.8523},{"id":"ib144","team":"Fighters","name":"Kengo Yoshida","off":1.1688},{"id":"ib145","team":"Buffaloes","name":"Tomoya Noguchi","off":0.8867},{"id":"ib146","team":"Tigers","name":"伏見寅威","off":0.8756},{"id":"ib147","team":"BayStars","name":"Yudai Yamamoto","off":0.9921},{"id":"ib148","team":"BayStars","name":"Takuma Hayashi","off":0.9777},{"id":"ib149","team":"Tigers","name":"小幡竜平","off":0.869},{"id":"ib150","team":"Fighters","name":"Kota Yazawa","off":0.9461}];
+const INITIAL_PITCHERS=[{"id":"ip1","team":"Tigers","name":"村上頌樹","pit":0.9444},{"id":"ip2","team":"Fighters","name":"Hiromi Ito","pit":1.0014},{"id":"ip3","team":"Buffaloes","name":"Aren Kuri","pit":1.0316},{"id":"ip4","team":"Tigers","name":"才木浩人","pit":0.7943},{"id":"ip5","team":"Dragons","name":"Yumeto Kanemaru","pit":0.9438},{"id":"ip6","team":"Tigers","name":"髙橋遥人","pit":0.7941},{"id":"ip7","team":"Lions","name":"Kona Takahashi","pit":1.0266},{"id":"ip8","team":"Lions","name":"Chihiro Sumida","pit":0.8982},{"id":"ip9","team":"Dragons","name":"Yuya Yanagi","pit":0.9807},{"id":"ip10","team":"Marines","name":"Andre Jackson","pit":1.0741},{"id":"ip11","team":"BayStars","name":"Katsuki Azuma","pit":0.9854},{"id":"ip12","team":"Swallows","name":"Yasunobu Okugawa","pit":1.0534},{"id":"ip13","team":"Swallows","name":"Taichi Yamano","pit":0.9629},{"id":"ip14","team":"Lions","name":"Yutaro Watanabe","pit":0.9653},{"id":"ip15","team":"Hawks","name":"Ryosuke Otsu","pit":1.0867},{"id":"ip16","team":"Fighters","name":"Koki Kitayama","pit":0.8869},{"id":"ip17","team":"Buffaloes","name":"Anderson Espinoza","pit":0.8714},{"id":"ip18","team":"Eagles","name":"Kosei Shoji","pit":1.1491},{"id":"ip19","team":"Lions","name":"Natsuki Takeuchi","pit":0.9633},{"id":"ip20","team":"Dragons","name":"Yudai Ono","pit":1.0368},{"id":"ip21","team":"Giants","name":"Haruto Inoe","pit":0.8369},{"id":"ip22","team":"Carp","name":"Hiroki Tokoda","pit":1.0233},{"id":"ip23","team":"Lions","name":"Kaima Taira","pit":0.848},{"id":"ip24","team":"Giants","name":"Kazuyuki Takemaru","pit":1.023},{"id":"ip25","team":"Eagles","name":"Takahisa Hayakawa","pit":0.9494},{"id":"ip26","team":"Carp","name":"Shun Okamoto","pit":0.9646},{"id":"ip27","team":"BayStars","name":"Yutaro Ishida","pit":0.859},{"id":"ip28","team":"Fighters","name":"Takayuki Kato","pit":1.0871},{"id":"ip29","team":"Swallows","name":"Kojiro Yoshimura","pit":1.2725},{"id":"ip30","team":"Hawks","name":"Naoyuki Uwasawa","pit":0.9864},{"id":"ip31","team":"Marines","name":"Koshiro Hiroike","pit":1.1849},{"id":"ip32","team":"Carp","name":"Masato Morishita","pit":1.2013},{"id":"ip33","team":"Hawks","name":"Haru Matsumoto","pit":0.9823},{"id":"ip34","team":"Buffaloes","name":"Sean Hjelle","pit":0.9196},{"id":"ip35","team":"Fighters","name":"Kota Tatsu","pit":0.9657},{"id":"ip36","team":"Giants","name":"Forrest Whitley","pit":0.9054},{"id":"ip37","team":"Eagles","name":"Ryota Takinaka","pit":1.0834},{"id":"ip38","team":"Swallows","name":"Kengo Matsumoto","pit":1.0012},{"id":"ip39","team":"Tigers","name":"大竹耕太郎","pit":1.0603},{"id":"ip40","team":"Dragons","name":"Kyle Muller","pit":1.0437},{"id":"ip41","team":"Marines","name":"Kazuya Ojima","pit":1.1119},{"id":"ip42","team":"BayStars","name":"Kentaro Taira","pit":0.967},{"id":"ip43","team":"Dragons","name":"Hiroto Takahashi","pit":0.8223},{"id":"ip44","team":"Eagles","name":"Tatsuki Koja","pit":1.0953},{"id":"ip45","team":"Carp","name":"Ryoji Kuribayashi","pit":0.7838},{"id":"ip46","team":"Hawks","name":"Yugo Maeda","pit":1.09},{"id":"ip47","team":"Fighters","name":"Haruki Hosono","pit":0.9048},{"id":"ip48","team":"Buffaloes","name":"Taito Takashima","pit":0.9915},{"id":"ip49","team":"Marines","name":"Kaito Mori","pit":1.1627},{"id":"ip50","team":"Hawks","name":"Carter Stewart Jr.","pit":1.1069},{"id":"ip51","team":"Fighters","name":"Ren Fukushima","pit":0.9955},{"id":"ip52","team":"Swallows","name":"Hirotoshi Takanashi","pit":1.0566},{"id":"ip53","team":"Swallows","name":"Keiji Takahashi","pit":1.0986},{"id":"ip54","team":"BayStars","name":"Kentaro Shinogi","pit":0.9919},{"id":"ip55","team":"Carp","name":"Shohei Mori","pit":1.0047},{"id":"ip56","team":"Hawks","name":"Tomohisa Ozeki","pit":1.3591},{"id":"ip57","team":"Fighters","name":"Kohei Arihara","pit":1.1108},{"id":"ip58","team":"Marines","name":"Sam Long","pit":1.1962},{"id":"ip59","team":"Eagles","name":"Jose Urena","pit":1.1698},{"id":"ip60","team":"Giants","name":"Masahiro Tanaka","pit":0.9282},{"id":"ip61","team":"Hawks","name":"Taiga Kamichatani","pit":1.1583},{"id":"ip62","team":"Giants","name":"Shosei Togo","pit":0.8991},{"id":"ip63","team":"Giants","name":"Takahiro Norimoto","pit":1.1731},{"id":"ip64","team":"Buffaloes","name":"Daiki Tajima","pit":1.373},{"id":"ip65","team":"Marines","name":"Haruya Tanaka","pit":1.1513},{"id":"ip66","team":"Buffaloes","name":"Ryuhei Sotani","pit":1.0233},{"id":"ip67","team":"Buffaloes","name":"Naruki Teranishi","pit":0.9668},{"id":"ip68","team":"Carp","name":"Shogo Tamamura","pit":1.0401},{"id":"ip69","team":"Dragons","name":"Yorinosuke Sakurai","pit":1.0684},{"id":"ip70","team":"BayStars","name":"Shuto Ogata","pit":1.0161},{"id":"ip71","team":"Eagles","name":"Kenta Maeda","pit":0.996},{"id":"ip72","team":"BayStars","name":"Sean Reynolds","pit":0.7719},{"id":"ip73","team":"Eagles","name":"Takayuki Kishi","pit":1.0668},{"id":"ip74","team":"Carp","name":"Freddy Tarnok","pit":0.8216},{"id":"ip75","team":"Marines","name":"Akira Yagi","pit":0.9803},{"id":"ip76","team":"Dragons","name":"Hideaki Wakui","pit":1.0462},{"id":"ip77","team":"Hawks","name":"Yuki Matsumoto","pit":0.8555},{"id":"ip78","team":"Giants","name":"Yuji Akahoshi","pit":1.0274},{"id":"ip79","team":"Marines","name":"Tokito Kawamura","pit":1.2158},{"id":"ip80","team":"Carp","name":"Daisuke Moriura","pit":0.8912},{"id":"ip81","team":"Buffaloes","name":"Soichiro Yamazaki","pit":1.0071},{"id":"ip82","team":"Carp","name":"Atsushi Endo","pit":1.004},{"id":"ip83","team":"Eagles","name":"Masaru Fujii","pit":1.0682},{"id":"ip84","team":"Lions","name":"Allan Winans","pit":1.1472},{"id":"ip85","team":"Lions","name":"Hiroshi Kaino","pit":1.0024},{"id":"ip86","team":"Buffaloes","name":"Ren Mukunoki","pit":0.8764},{"id":"ip87","team":"Lions","name":"Shinya Sugai","pit":1.0798},{"id":"ip88","team":"Swallows","name":"Yasuhiro Ogawa","pit":1.2003},{"id":"ip89","team":"Buffaloes","name":"Andres Machado","pit":0.9091},{"id":"ip90","team":"Marines","name":"Rikuto Yokoyama","pit":1.0697},{"id":"ip91","team":"Hawks","name":"Kazuki Sugiyama","pit":0.8175},{"id":"ip92","team":"Tigers","name":"R.ドリス","pit":0.8056},{"id":"ip93","team":"Giants","name":"Raidel Martinez","pit":0.8525},{"id":"ip94","team":"Tigers","name":"工藤泰成","pit":0.7576},{"id":"ip95","team":"Hawks","name":"Roberto Osuna","pit":0.8768},{"id":"ip96","team":"Giants","name":"Eito Tanaka","pit":0.9359},{"id":"ip97","team":"Carp","name":"Taichi Taka","pit":0.8451},{"id":"ip98","team":"Carp","name":"Taylor Hearn","pit":0.7404},{"id":"ip99","team":"Carp","name":"Kenya Suzuki","pit":1.0285}];
+const INITIAL_TEAM_BAT={"BayStars":1.0197,"Buffaloes":0.9915,"Carp":0.957,"Dragons":0.9985,"Eagles":0.988,"Fighters":1.0624,"Giants":0.9945,"Hawks":1.0525,"Lions":0.9825,"Marines":0.9976,"Swallows":0.9683,"Tigers":1.0437};
+const INITIAL_TEAM_PIT={"BayStars":0.9372,"Buffaloes":0.9904,"Carp":0.9666,"Dragons":0.9831,"Eagles":1.0733,"Fighters":0.9875,"Giants":0.947,"Hawks":1.0497,"Lions":0.9665,"Marines":1.128,"Swallows":1.0788,"Tigers":0.8699};
+function makeInitialModel(){
+  const byBat={},byPit={};
+  for(const [k] of TEAMS){byBat[k]=[];byPit[k]=[]}
+  for(const p of INITIAL_BATTERS)(byBat[p.team]||(byBat[p.team]=[])).push(p);
+  for(const p of INITIAL_PITCHERS)(byPit[p.team]||(byPit[p.team]=[])).push(p);
+  return {byBat,byPit,teamBat:INITIAL_TEAM_BAT,teamPit:INITIAL_TEAM_PIT};
+}
+const initialModel=makeInitialModel();
+function activeModel(){return model||initialModel}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+
 const $ = id => document.getElementById(id);
 let half='top', outs=0, bases=0, stats=null, model=null, calcTimer=null;
 
@@ -368,7 +384,7 @@ function mulberry32(a){return()=>{let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);
 function poisson(lambda,rng){let L=Math.exp(-lambda),k=0,p=1;do{k++;p*=rng()}while(p>L);return k-1}
 function battingTeam(ha,h){const homeT=ha==='home';return ((h==='top'&&!homeT)||(h==='bottom'&&homeT))?TEAM_T:$('opponent').value}
 function fieldingTeam(ha,h){return battingTeam(ha,h)===TEAM_T?$('opponent').value:TEAM_T}
-function getPlayerById(team,id,type){const arr=type==='bat'?model?.byBat?.[team]:model?.byPit?.[team];return arr?.find(x=>x.id===id)||null}
+function getPlayerById(team,id,type){const m=activeModel();const arr=type==='bat'?m?.byBat?.[team]:m?.byPit?.[team];return arr?.find(x=>x.id===id)||null}
 function lineupIds(team){const prefix=team===TEAM_T?'tLine':'oLine';return Array.from({length:9},(_,i)=>$(prefix+i)?.value||'')}
 function currentPos(team){return Number(team===TEAM_T?$('tigersBatterPos').value:$('oppBatterPos').value)||0}
 function currentPitcherFor(team){const id=team===TEAM_T?$('tigersPitcher').value:$('oppPitcher').value;return getPlayerById(team,id,'pit')}
@@ -394,8 +410,58 @@ function simulateInningMetrics(){
   for(let i=0;i<N;i++){const r=simulateHalf(team,def,outs,bases,pos,pit,rng,null).runs;total+=r;if(r>0)any++}
   return {prob:any/N*100,exp:total/N};
 }
+
+function initialAttackFactor(team){
+  const ids=lineupIds(team),pos=currentPos(team),vals=[];
+  for(let j=0;j<3;j++){
+    const p=getPlayerById(team,ids[(pos+j)%9],'bat');
+    if(p?.off) vals.push(p.off);
+  }
+  return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:(initialModel.teamBat[team]||1);
+}
+function initialPitchFactor(defTeam){
+  const p=currentPitcherFor(defTeam);
+  return p?.pit || initialModel.teamPit[defTeam] || 1;
+}
+function initialCurrentMultiplier(team,defTeam){
+  const raw=initialAttackFactor(team)*initialPitchFactor(defTeam);
+  return clamp(Math.pow(raw,.85),.55,1.65);
+}
+function initialFutureMultiplier(team,defTeam){
+  const raw=(initialModel.teamBat[team]||1)*(initialModel.teamPit[defTeam]||1);
+  return clamp(Math.pow(raw,.85),.60,1.55);
+}
+function initialInningMetrics(){
+  const ha=$('homeAway').value,team=battingTeam(ha,half),def=fieldingTeam(ha,half);
+  const m=initialCurrentMultiplier(team,def),baseP=RP[bases][outs]/100;
+  return {prob:(1-Math.pow(1-baseP,m))*100,exp:RE[bases][outs]*m,mult:m};
+}
+function initialWin(){
+  const ha=$('homeAway').value,opp=$('opponent').value,inn0=Number($('inning').value);
+  const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
+  const state=[inn0,half,outs,bases,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v04'].join('|');
+  const rng=mulberry32(xmur3(state)());let w=0,d=0,l=0,N=5500;
+  for(let s=0;s<N;s++){
+    let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
+    while(!done){
+      const bat=battingTeam(ha,h),def=bat===TEAM_T?opp:TEAM_T;
+      const mult=first?initialCurrentMultiplier(bat,def):initialFutureMultiplier(bat,def);
+      const lambda=clamp((first?RE[bases][outs]:RE[0][0])*mult,.015,2.6);
+      const runs=poisson(lambda,rng);
+      if(bat===TEAM_T)t+=runs;else o+=runs;
+      const homeIsT=ha==='home',homeScore=homeIsT?t:o,awayScore=homeIsT?o:t;
+      if(h==='top'&&inn>=9&&homeScore>awayScore){done=true;break}
+      if(h==='bottom'&&inn>=9&&homeScore!==awayScore){done=true;break}
+      if(h==='top')h='bottom';else{if(inn>=12){done=true;break}inn++;h='top'}
+      first=false;
+    }
+    if(t>o)w++;else if(t===o)d++;else l++;
+  }
+  return {w:w/N*100,d:d/N*100,l:l/N*100};
+}
+
 function simulateWin(){
-  if(!model) return baselineWin();
+  if(!model) return initialWin();
   const ha=$('homeAway').value, opp=$('opponent').value, inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
   const state=[inn0,half,outs,bases,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated].join('|');
@@ -461,12 +527,14 @@ function fillPlayerSelect(sel,arr,includeTeam=true){
   if([...sel.options].some(o=>o.value===old))sel.value=old;
 }
 function fillLineup(team,prefix){
-  const arr=model?.byBat?.[team]||[];
+  const arr=activeModel()?.byBat?.[team]||[];
   for(let i=0;i<9;i++){
     const sel=$(prefix+i),old=sel.value;sel.innerHTML='';
-    for(const p of arr){const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name} (${p.pa}打席)`;sel.appendChild(o)}
-    if([...sel.options].some(o=>o.value===old))sel.value=old;
+    const avg=document.createElement('option');avg.value='__avg__';avg.textContent='球団平均 / その他';sel.appendChild(avg);
+    for(const p of arr){const o=document.createElement('option');o.value=p.id;o.textContent=p.pa?`${p.name} (${p.pa}打席)`:p.name;sel.appendChild(o)}
+    if(old&&[...sel.options].some(o=>o.value===old))sel.value=old;
     else if(arr[i])sel.value=arr[i].id;
+    else sel.value='__avg__';
   }
 }
 function refreshBatterPosLabels(){
@@ -481,30 +549,25 @@ function refreshBatterPosLabels(){
   }
 }
 function refreshPlayerUI(){
-  const opp=$('opponent').value;
+  const opp=$('opponent').value,m=activeModel();
   $('oppLineupTitle').textContent=TEAM_NAME[opp]||'相手';
-  if(!model){
-    $('playerCard').style.opacity=.55;
-    for(const s of document.querySelectorAll('#playerCard select'))s.disabled=true;
-    return;
-  }
   $('playerCard').style.opacity=1;
   for(const s of document.querySelectorAll('#playerCard select'))s.disabled=false;
   fillLineup(TEAM_T,'tLine');fillLineup(opp,'oLine');refreshBatterPosLabels();
-  fillPlayerSelect($('tigersPitcher'),model.byPit[TEAM_T]);
-  fillPlayerSelect($('oppPitcher'),model.byPit[opp]);
+  fillPlayerSelect($('tigersPitcher'),m?.byPit?.[TEAM_T]||[]);
+  fillPlayerSelect($('oppPitcher'),m?.byPit?.[opp]||[]);
 }
 function updateStatus(){
-  if(stats?.bat?.length&&stats?.pit?.length){
-    $('dataStatus').innerHTML=`<strong>選手モデルON</strong><br>2026打者 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>端末への読込：${new Date(stats.updated).toLocaleString('ja-JP')}`;
-    $('modelBadge').className='badge good';$('modelBadge').textContent='2026・12球団選手モデル';
+  if(model&&stats?.bat?.length&&stats?.pit?.length){
+    $('dataStatus').innerHTML=`<strong>詳細選手モデルON</strong><br>ProEyeKyuu 2026：打者 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>端末への読込：${new Date(stats.updated).toLocaleString('ja-JP')}`;
+    $('modelBadge').className='badge good';$('modelBadge').textContent='2026詳細選手モデル';
   }else{
-    $('dataStatus').textContent='選手データ未読込。現在は従来のNPB平均モデルで動作します。';
-    $('modelBadge').className='badge warn';$('modelBadge').textContent='ベースラインモデル';
+    $('dataStatus').innerHTML='<strong>初期選手モデルON</strong><br>2026年8月上旬スナップショット：主要打者150人 / 主要投手99人を内蔵。CSVなしで使えます。';
+    $('modelBadge').className='badge good';$('modelBadge').textContent='2026初期選手モデル';
   }
 }
-function saveStats(){try{localStorage.setItem('tigersStatsV3',JSON.stringify(stats))}catch(e){toast('保存容量エラー')}}
-function loadStats(){try{const x=localStorage.getItem('tigersStatsV3');if(x)stats=JSON.parse(x)}catch(e){}buildModel();updateStatus();refreshPlayerUI()}
+function saveStats(){try{localStorage.setItem('tigersStatsV4',JSON.stringify(stats))}catch(e){toast('保存容量エラー')}}
+function loadStats(){try{const x=localStorage.getItem('tigersStatsV4')||localStorage.getItem('tigersStatsV3');if(x)stats=JSON.parse(x)}catch(e){}buildModel();updateStatus();refreshPlayerUI()}
 async function importBat(file){
   const rows=parseCSV(await file.text()),bat=reduceBat(rows);
   if(bat.length<30)throw new Error('2026年の打撃データを十分に認識できませんでした');
@@ -516,8 +579,8 @@ async function importPit(file){
   stats=stats||{};stats.pit=pit;stats.updated=Date.now();saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました`);
 }
 function exportData(){
-  if(!model){toast('先に打撃・投手CSVを読み込んでください');return}
-  const blob=new Blob([JSON.stringify({version:3,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  if(!model){toast('初期選手データは最初から内蔵済みです。共有書き出しはCSV更新後に使えます');return}
+  const blob=new Blob([JSON.stringify({version:4,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importJson(file){
@@ -530,12 +593,33 @@ function update(){
   const ha=$('homeAway').value,opp=$('opponent').value,bat=battingTeam(ha,half);
   $('attackLabel').textContent=`攻撃側：${TEAM_NAME[bat]}`;
   let prob=RP[bases][outs],exp=RE[bases][outs];
-  if(model){const m=simulateInningMetrics();if(m){prob=m.prob;exp=m.exp;$('runModelLabel').textContent='2026打者 × 現在投手モデル';$('runNote').textContent='現在打者・打順・投手を反映したシミュレーション。'}}
-  else{$('runModelLabel').textContent='NPB 24状況ベースライン';$('runNote').textContent='2023–2025 NPBのアウト数×走者状況の集計値。'}
-  $('runProb').innerHTML=`${prob.toFixed(1)}<span class="unit">%</span>`;$('runExp').innerHTML=`${exp.toFixed(2)}<span class="unit"> 点</span>`;
-  const p=simulateWin();$('winBig').innerHTML=`${p.w.toFixed(1)}<span class="unit">%</span>`;$('wText').textContent=`${p.w.toFixed(1)}%`;$('dText').textContent=`${p.d.toFixed(1)}%`;$('lText').textContent=`${p.l.toFixed(1)}%`;
+  try{
+    if(model){
+      const m=simulateInningMetrics();
+      if(m){prob=m.prob;exp=m.exp}
+      $('runModelLabel').textContent='2026詳細打席モデル';
+      $('runNote').textContent='読み込んだ2026打撃・投手CSVから、現在打者・打順・投手を打席単位でシミュレーション。';
+    }else{
+      const m=initialInningMetrics();
+      if(m){prob=m.prob;exp=m.exp}
+      $('runModelLabel').textContent='2026初期選手モデル';
+      $('runNote').textContent='内蔵した2026選手係数で、現在から近い打者3人と現在投手を反映。投手未選択時は球団投手平均。';
+    }
+  }catch(e){
+    prob=RP[bases][outs];exp=RE[bases][outs];
+    $('runModelLabel').textContent='NPB 24状況ベースライン';
+    $('runNote').textContent='選手モデルの計算に失敗したため、2023–2025 NPBの24状況集計へ自動フォールバック。';
+  }
+  $('runProb').innerHTML=`${Number.isFinite(prob)?prob.toFixed(1):RP[bases][outs].toFixed(1)}<span class="unit">%</span>`;
+  $('runExp').innerHTML=`${Number.isFinite(exp)?exp.toFixed(2):RE[bases][outs].toFixed(2)}<span class="unit"> 点</span>`;
+
+  let p;
+  try{p=simulateWin()}catch(e){p=baselineWin()}
+  if(!p||![p.w,p.d,p.l].every(Number.isFinite))p=baselineWin();
+  $('winBig').innerHTML=`${p.w.toFixed(1)}<span class="unit">%</span>`;
+  $('wText').textContent=`${p.w.toFixed(1)}%`;$('dText').textContent=`${p.d.toFixed(1)}%`;$('lText').textContent=`${p.l.toFixed(1)}%`;
   $('wp').style.width=p.w+'%';$('dp').style.width=p.d+'%';$('lp').style.width=p.l+'%';
-  $('winModelLabel').textContent=model?'12球団・選手別 4,500試合シミュレーション':'NPB平均 簡易シミュレーション';
+  $('winModelLabel').textContent=model?'12球団・詳細選手 4,500試合シミュレーション':'12球団・初期選手 5,500試合シミュレーション';
   const bn=[];if(bases&1)bn.push('一');if(bases&2)bn.push('二');if(bases&4)bn.push('三');
   $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・${bn.length?bn.join('・')+'塁':'走者なし'}`;
 }
