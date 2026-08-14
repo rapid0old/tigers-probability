@@ -6,5 +6,5 @@
   "display": "standalone",
   "background_color": "#0f0f10",
   "theme_color": "#111111",
-  "description": "阪神戦を見ながら得点確率・得点期待値・簡易勝率を確認する私的利用向けPWA"
+  "description": "2026年12球団・選手データを端末内に読み込んで得点確率と阪神勝率をシミュレーションする私的利用PWA"
 }

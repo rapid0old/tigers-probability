@@ -11,392 +11,547 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
 <title>阪神 試合確率チェッカー</title>
 <style>
-:root{
-  --bg:#0f0f10; --card:#19191b; --card2:#222225; --text:#f6f6f6;
-  --muted:#a9a9ae; --line:#333338; --accent:#f2d21b; --good:#61d37a;
-  --bad:#ff6b6b; --blue:#67a8ff;
-}
+:root{--bg:#0f0f10;--card:#19191b;--card2:#222225;--text:#f6f6f6;--muted:#a9a9ae;--line:#333338;--accent:#f2d21b;--good:#61d37a;--bad:#ff6b6b;--blue:#67a8ff}
 *{box-sizing:border-box}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  -webkit-tap-highlight-color:transparent;
-}
-.wrap{max-width:680px;margin:0 auto;padding:16px 14px 40px}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:720px;margin:0 auto;padding:16px 14px 50px}
 header{display:flex;align-items:center;gap:10px;margin:4px 2px 16px}
-.logo{
-  width:42px;height:42px;border-radius:12px;background:var(--accent);
-  display:grid;place-items:center;color:#111;font-size:24px;font-weight:900
-}
+.logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#111;font-size:24px;font-weight:900}
 h1{font-size:20px;margin:0;line-height:1.2}
 .sub{font-size:12px;color:var(--muted);margin-top:3px}
-.card{
-  background:var(--card);border:1px solid var(--line);border-radius:18px;
-  padding:16px;margin-bottom:12px;box-shadow:0 5px 18px rgba(0,0,0,.18)
-}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 5px 18px rgba(0,0,0,.18)}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-select,input[type=number]{
-  width:100%;font-size:17px;color:var(--text);background:var(--card2);
-  border:1px solid var(--line);border-radius:12px;padding:12px;
-  outline:none
-}
+select,input[type=number]{width:100%;font-size:16px;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
+button,.buttonLink{appearance:none;border:none;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:750;background:var(--card2);color:var(--text);border:1px solid var(--line);touch-action:manipulation;text-align:center;text-decoration:none;display:block}
+button.active{background:var(--accent);color:#111;border-color:var(--accent)}
+button.primary{background:var(--accent);color:#111;border-color:var(--accent)}
+button.secondary{background:#252c37;border-color:#3a4658}
+button:disabled{opacity:.45}
 .scorebox{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end}
 .dash{font-size:28px;font-weight:700;padding-bottom:8px}
 .segment{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-button{
-  appearance:none;border:none;border-radius:12px;padding:12px 8px;
-  font-size:15px;font-weight:700;background:var(--card2);color:var(--text);
-  border:1px solid var(--line);touch-action:manipulation
-}
-button.active{background:var(--accent);color:#111;border-color:var(--accent)}
-.bases{
-  width:172px;height:130px;margin:6px auto 2px;position:relative
-}
-.base{
-  position:absolute;width:50px;height:50px;transform:rotate(45deg);
-  border-radius:8px;background:var(--card2);border:2px solid #555;
-  display:grid;place-items:center
-}
+.bases{width:180px;height:136px;margin:6px auto 2px;position:relative}
+.base{position:absolute;width:52px;height:52px;transform:rotate(45deg);border-radius:8px;background:var(--card2);border:2px solid #555;display:grid;place-items:center}
 .base span{transform:rotate(-45deg);font-size:12px;font-weight:800}
 .base.on{background:var(--accent);border-color:var(--accent);color:#111}
-#b2{top:0;left:61px}
-#b3{top:48px;left:10px}
-#b1{top:48px;right:10px}
+#b2{top:0;left:64px} #b3{top:50px;left:10px} #b1{top:50px;right:10px}
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.metric{
-  background:var(--card2);border-radius:15px;padding:14px;border:1px solid var(--line)
-}
+.metric{background:var(--card2);border-radius:15px;padding:14px;border:1px solid var(--line)}
 .metric .name{font-size:12px;color:var(--muted);margin-bottom:7px}
 .metric .value{font-size:28px;font-weight:900;letter-spacing:-.5px}
 .metric .unit{font-size:14px;color:var(--muted);font-weight:600}
-.winbar{
-  height:12px;border-radius:999px;background:#333;overflow:hidden;margin:14px 0 10px;
-  display:flex
-}
-.winpart{height:100%}
-#wp{background:var(--good)}
-#dp{background:#888}
-#lp{background:var(--bad)}
-.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px}
-.legend b{display:block;font-size:18px;margin-top:2px}
-.status{
-  background:#101012;border-radius:13px;padding:12px 13px;
-  border:1px solid var(--line);font-size:14px;line-height:1.55
-}
-.note{font-size:12px;color:var(--muted);line-height:1.6}
-.badge{
-  display:inline-block;font-size:11px;padding:4px 8px;border-radius:999px;
-  background:#2b2b2f;color:#d9d9dc;margin-bottom:8px
-}
-footer{font-size:11px;color:#85858b;line-height:1.55;padding:6px 4px}
-a{color:#b7cfff}
+.bigAttack{font-size:17px;font-weight:850;margin-bottom:10px}
+.winbar{height:12px;border-radius:999px;background:#333;overflow:hidden;margin:14px 0 10px;display:flex}
+.winpart{height:100%} #wp{background:var(--good)} #dp{background:#888} #lp{background:var(--bad)}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px}.legend b{display:block;font-size:18px;margin-top:2px}
+.status{background:#101012;border-radius:13px;padding:12px 13px;border:1px solid var(--line);font-size:14px;line-height:1.55}
+.note{font-size:12px;color:var(--muted);line-height:1.65}
+.badge{display:inline-block;font-size:11px;padding:4px 8px;border-radius:999px;background:#2b2b2f;color:#d9d9dc;margin-bottom:8px}
+.badge.good{background:#17371f;color:#8ce39f}.badge.warn{background:#4a3b12;color:#f2d96b}
+.dataStatus{padding:12px;border:1px solid var(--line);border-radius:13px;background:#111114;font-size:13px;line-height:1.55;margin-bottom:10px}
+.dataStatus strong{color:var(--accent)}
+details{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+summary{cursor:pointer;font-weight:800;font-size:14px}
+.lineupGrid{display:grid;grid-template-columns:44px 1fr;gap:7px;align-items:center;margin-top:10px}
+.slot{font-size:12px;color:var(--muted);text-align:center}
+.small{font-size:11px;color:var(--muted);line-height:1.55}
+.actionGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 hr{border:0;border-top:1px solid var(--line);margin:14px 0}
-@media(max-width:380px){
-  .metric .value{font-size:24px}
-  .wrap{padding-left:10px;padding-right:10px}
-}
+footer{font-size:11px;color:#85858b;line-height:1.6;padding:6px 4px}
+a{color:#b7cfff}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#29292d;border:1px solid #48484f;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;max-width:90%;display:none;z-index:20}
+@media(max-width:390px){.metric .value{font-size:24px}.wrap{padding-left:10px;padding-right:10px}.row{grid-template-columns:1fr}.actionGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header>
-    <div class="logo">虎</div>
-    <div>
-      <h1>阪神 試合確率チェッカー</h1>
-      <div class="sub">スマホ版 v0.2</div>
-    </div>
-  </header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.3</div></div></header>
 
-  <section class="card">
+<section class="card">
+  <div id="modelBadge" class="badge warn">ベースラインモデル</div>
+  <div id="attackLabel" class="bigAttack">攻撃側：--</div>
+  <div class="row">
+    <div><label>対戦相手</label><select id="opponent"></select></div>
+    <div><label>阪神は</label><select id="homeAway"><option value="away">先攻（ビジター）</option><option value="home">後攻（ホーム）</option></select></div>
+  </div>
+  <div style="height:10px"></div>
+  <div class="row">
+    <div><label>イニング</label><select id="inning"></select></div>
+    <div><label>表 / 裏</label><div class="segment"><button id="topBtn" class="active">表</button><button id="botBtn">裏</button><button id="nextHalf">次の半回 →</button></div></div>
+  </div>
+  <hr>
+  <div class="scorebox">
+    <div><label>阪神</label><input id="tigersScore" type="number" inputmode="numeric" min="0" max="99" value="0"></div>
+    <div class="dash">−</div>
+    <div><label>相手</label><input id="oppScore" type="number" inputmode="numeric" min="0" max="99" value="0"></div>
+  </div>
+</section>
+
+<section class="card">
+  <label>アウト</label>
+  <div class="segment"><button class="outBtn active" data-o="0">0</button><button class="outBtn" data-o="1">1</button><button class="outBtn" data-o="2">2</button></div>
+  <div style="height:12px"></div>
+  <label>走者（タップでON/OFF）</label>
+  <div class="bases"><button class="base" id="b2"><span>二塁</span></button><button class="base" id="b3"><span>三塁</span></button><button class="base" id="b1"><span>一塁</span></button></div>
+</section>
+
+<section class="card" id="playerCard">
+  <span class="badge">選手設定</span>
+  <div class="row">
+    <div><label>阪神・現在/次打者</label><select id="tigersBatterPos"></select></div>
+    <div><label>相手・現在/次打者</label><select id="oppBatterPos"></select></div>
+  </div>
+  <div style="height:10px"></div>
+  <div class="row">
+    <div><label>阪神・現在投手</label><select id="tigersPitcher"></select></div>
+    <div><label>相手・現在投手</label><select id="oppPitcher"></select></div>
+  </div>
+
+  <details>
+    <summary>打順を設定（試合開始時に1回）</summary>
     <div class="row">
-      <div>
-        <label>阪神は</label>
-        <select id="homeAway">
-          <option value="away">先攻（ビジター）</option>
-          <option value="home">後攻（ホーム）</option>
-        </select>
-      </div>
-      <div>
-        <label>イニング</label>
-        <select id="inning"></select>
-      </div>
+      <div><div class="small" style="margin-top:10px"><b>阪神</b></div><div id="tigersLineup" class="lineupGrid"></div></div>
+      <div><div class="small" style="margin-top:10px"><b id="oppLineupTitle">相手</b></div><div id="oppLineup" class="lineupGrid"></div></div>
     </div>
+    <div class="small" style="margin-top:10px">初期値は2026年の打席数が多い選手から自動設定します。実際のスタメン順に直すと、勝率計算に打順が反映されます。</div>
+  </details>
+</section>
 
-    <div style="height:10px"></div>
-    <label>表 / 裏</label>
-    <div class="segment">
-      <button id="topBtn" class="active">表</button>
-      <button id="botBtn">裏</button>
-      <button id="nextHalf">次の半回 →</button>
-    </div>
+<section class="card">
+  <span class="badge" id="runModelLabel">NPB 24状況ベースライン</span>
+  <div class="metrics">
+    <div class="metric"><div class="name">この回 1点以上</div><div class="value" id="runProb">--<span class="unit">%</span></div></div>
+    <div class="metric"><div class="name">この回の得点期待値</div><div class="value" id="runExp">--<span class="unit"> 点</span></div></div>
+  </div>
+  <div class="small" id="runNote" style="margin-top:8px"></div>
+</section>
 
-    <hr>
-    <div class="scorebox">
-      <div>
-        <label>阪神</label>
-        <input id="tigersScore" type="number" inputmode="numeric" min="0" max="99" value="0">
-      </div>
-      <div class="dash">−</div>
-      <div>
-        <label>相手</label>
-        <input id="oppScore" type="number" inputmode="numeric" min="0" max="99" value="0">
-      </div>
-    </div>
-  </section>
+<section class="card">
+  <span class="badge" id="winModelLabel">簡易勝率モデル</span>
+  <div class="metric" style="margin-bottom:10px"><div class="name">阪神 勝利確率</div><div class="value" id="winBig">--<span class="unit">%</span></div></div>
+  <div class="winbar"><div id="wp" class="winpart"></div><div id="dp" class="winpart"></div><div id="lp" class="winpart"></div></div>
+  <div class="legend"><div>勝ち<b id="wText">--%</b></div><div>引分<b id="dText">--%</b></div><div>負け<b id="lText">--%</b></div></div>
+  <div style="height:12px"></div><div class="status" id="statusText"></div>
+</section>
 
-  <section class="card">
-    <label>アウト</label>
-    <div class="segment">
-      <button class="outBtn active" data-o="0">0</button>
-      <button class="outBtn" data-o="1">1</button>
-      <button class="outBtn" data-o="2">2</button>
-    </div>
+<section class="card">
+  <span class="badge">2026データ更新</span>
+  <div id="dataStatus" class="dataStatus">選手データ未読込。現在は従来のNPB平均モデルで動作します。</div>
+  <div class="actionGrid">
+    <a class="buttonLink secondary" href="https://proeyekyuu.com/ja/player-batting-stats-jp/" target="_blank" rel="noopener noreferrer">① 打撃データを開く</a>
+    <a class="buttonLink secondary" href="https://proeyekyuu.com/ja/player-pitching-stats-jp/" target="_blank" rel="noopener noreferrer">② 投手データを開く</a>
+    <button id="importBatBtn">打撃CSVを読込</button>
+    <button id="importPitBtn">投手CSVを読込</button>
+    <button id="exportDataBtn">母用データを書き出す</button>
+    <button id="importDataBtn">共有データを読込</button>
+  </div>
+  <input id="batFile" type="file" accept=".csv,text/csv" hidden>
+  <input id="pitFile" type="file" accept=".csv,text/csv" hidden>
+  <input id="jsonFile" type="file" accept=".json,application/json" hidden>
+  <div class="note" style="margin-top:10px">
+    ProEyeKyuuで「シーズン=2026」に絞ってCSVを書き出し、このアプリに読み込ませます。読み込んだデータはこの端末のブラウザ内だけに保存されます。<br>
+    毎試合後にCSVを入れ直せば、2026年の最新成績に更新できます。あなたが更新後に「母用データ」を書き出せば、お母さん側はそのJSON 1ファイルを読み込むだけです。
+  </div>
+</section>
 
-    <div style="height:12px"></div>
-    <label>走者（タップでON/OFF）</label>
-    <div class="bases">
-      <button class="base" id="b2"><span>二塁</span></button>
-      <button class="base" id="b3"><span>三塁</span></button>
-      <button class="base" id="b1"><span>一塁</span></button>
-    </div>
-  </section>
+<section class="card">
+  <div class="note">
+    <b>選手モデルのロジック</b><br>
+    2026年の12球団全体をリーグ基準にし、打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を組み合わせて各打席をシミュレーションします。打席数・対戦打者数が少ない選手はリーグ平均へ縮約し、小標本の暴れを抑えます。<br><br>
+    現在の半イニングでは選択中の投手を使用し、それ以降のイニングはその球団の2026年投手平均を使用します。守備・球場・左右別・対戦相性・代打/継投予測はまだ未反映です。
+  </div>
+</section>
 
-  <section class="card">
-    <span class="badge">得点指標：過去3年（2023–2025）NPB集計</span>
-    <div class="metrics">
-      <div class="metric">
-        <div class="name">この回 1点以上</div>
-        <div class="value" id="runProb">--<span class="unit">%</span></div>
-      </div>
-      <div class="metric">
-        <div class="name">この回の得点期待値</div>
-        <div class="value" id="runExp">--<span class="unit"> 点</span></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="card">
-    <span class="badge">簡易勝率モデル（同等戦力を仮定）</span>
-    <div class="metric" style="margin-bottom:10px">
-      <div class="name">阪神 勝利確率</div>
-      <div class="value" id="winBig">--<span class="unit">%</span></div>
-    </div>
-    <div class="winbar">
-      <div id="wp" class="winpart"></div>
-      <div id="dp" class="winpart"></div>
-      <div id="lp" class="winpart"></div>
-    </div>
-    <div class="legend">
-      <div>勝ち<b id="wText">--%</b></div>
-      <div>引分<b id="dText">--%</b></div>
-      <div>負け<b id="lText">--%</b></div>
-    </div>
-    <div style="height:12px"></div>
-    <div class="status" id="statusText"></div>
-  </section>
-
-  <section class="card">
-    <div class="note">
-      <b>この版の意味</b><br>
-      得点確率・得点期待値は、24通りの「アウト数 × 走者状況」の公開集計値を表示します。
-      勝率は、その得点期待値を使って残りイニングをモンテカルロ計算した<b>簡易推定</b>です。
-      選手・投手・球場・阪神の2026年チーム力はまだ入れていません。<br><br>
-      <b>セキュリティ</b><br>
-      外部API、広告、トラッキング、Cookie、外部JavaScriptは使用していません。
-      計算はすべてこの端末内で完結します。
-    </div>
-  </section>
-
-  <footer>
-    得点期待値・得点確率の参照：
-    <a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer「得点期待値 / 得点確率」</a>
-    （2023–2025年、投手を含む全打席から算出と掲載）。<br>
-    このファイルは私的利用向けの非公式ツールで、阪神タイガース・NPBとは無関係です。
-  </footer>
+<footer>
+得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
+2026選手成績：<a href="https://proeyekyuu.com/ja/home-jp/" target="_blank" rel="noopener noreferrer">ProEyeKyuu / プロEYE球</a>。データは利用者がCSVとして端末内に読み込みます。<br>
+非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
+</footer>
 </div>
+<div id="toast" class="toast"></div>
 
 <script>
-// Run expectancy / probability table.
-// Keys: bases bitmask (1=1B, 2=2B, 4=3B), then outs 0..2.
-// Source attribution in UI footer.
-const RE = {
-  0:[0.38,0.20,0.07],
-  1:[0.70,0.42,0.19],
-  2:[0.99,0.59,0.27],
-  3:[1.26,0.79,0.40],
-  4:[1.25,0.92,0.33],
-  5:[1.60,1.06,0.42],
-  6:[1.76,1.23,0.48],
-  7:[2.05,1.41,0.66]
-};
-const RP = {
-  0:[22.2,12.3,4.9],
-  1:[36.3,22.2,10.3],
-  2:[58.7,36.4,19.1],
-  3:[57.3,37.3,21.0],
-  4:[79.8,64.8,23.5],
-  5:[84.5,62.5,24.5],
-  6:[82.4,65.2,23.4],
-  7:[84.0,64.6,29.9]
-};
-
+const SEASON = 2026;
+const TEAM_T = 'Tigers';
+const TEAMS = [
+  ['Giants','読売ジャイアンツ'],['Tigers','阪神タイガース'],['BayStars','横浜DeNAベイスターズ'],
+  ['Carp','広島東洋カープ'],['Dragons','中日ドラゴンズ'],['Swallows','東京ヤクルトスワローズ'],
+  ['Hawks','福岡ソフトバンクホークス'],['Fighters','北海道日本ハムファイターズ'],
+  ['Buffaloes','オリックス・バファローズ'],['Eagles','東北楽天ゴールデンイーグルス'],
+  ['Lions','埼玉西武ライオンズ'],['Marines','千葉ロッテマリーンズ']
+];
+const TEAM_NAME = Object.fromEntries(TEAMS);
+const RE = {0:[0.38,0.20,0.07],1:[0.70,0.42,0.19],2:[0.99,0.59,0.27],3:[1.26,0.79,0.40],4:[1.25,0.92,0.33],5:[1.60,1.06,0.42],6:[1.76,1.23,0.48],7:[2.05,1.41,0.66]};
+const RP = {0:[22.2,12.3,4.9],1:[36.3,22.2,10.3],2:[58.7,36.4,19.1],3:[57.3,37.3,21.0],4:[79.8,64.8,23.5],5:[84.5,62.5,24.5],6:[82.4,65.2,23.4],7:[84.0,64.6,29.9]};
 const $ = id => document.getElementById(id);
-for(let i=1;i<=12;i++){
-  const o=document.createElement('option'); o.value=i; o.textContent=`${i}回`; $('inning').appendChild(o);
+let half='top', outs=0, bases=0, stats=null, model=null, calcTimer=null;
+
+function toast(msg){const e=$('toast');e.textContent=msg;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
+function num(x){const v=Number(String(x??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
+function safeDiv(a,b){return b>0?a/b:0}
+
+function canonTeam(s){
+  const x=String(s||'').toLowerCase().replace(/\s+/g,'');
+  const rules=[
+    ['Tigers',['tigers','hanshintigers','阪神タイガース','タイガース','阪神']],
+    ['Giants',['giants','yomiurigiants','読売ジャイアンツ','巨人','ジャイアンツ']],
+    ['BayStars',['baystars','yokohamadenabaystars','横浜denaベイスターズ','ベイスターズ','dena']],
+    ['Carp',['carp','hiroshimatoyocarp','広島東洋カープ','カープ','広島']],
+    ['Dragons',['dragons','chunichidragons','中日ドラゴンズ','ドラゴンズ','中日']],
+    ['Swallows',['swallows','tokyoyakultswallows','東京ヤクルトスワローズ','スワローズ','ヤクルト']],
+    ['Hawks',['hawks','fukuokasoftbankhawks','福岡ソフトバンクホークス','ホークス','ソフトバンク']],
+    ['Fighters',['fighters','hokkaidonippon-hamfighters','hokkaidonipponhamfighters','北海道日本ハムファイターズ','ファイターズ','日本ハム']],
+    ['Buffaloes',['buffaloes','orixbuffaloes','オリックス・バファローズ','オリックスバファローズ','バファローズ','オリックス']],
+    ['Eagles',['eagles','tohokurakutengoldeneagles','東北楽天ゴールデンイーグルス','イーグルス','楽天']],
+    ['Lions',['lions','saitamaseibulions','埼玉西武ライオンズ','ライオンズ','西武']],
+    ['Marines',['marines','chibalottemarines','千葉ロッテマリーンズ','マリーンズ','ロッテ']]
+  ];
+  for(const [k,arr] of rules) if(arr.some(a=>x.includes(a.toLowerCase().replace(/\s+/g,'')))) return k;
+  return null;
 }
-$('inning').value='1';
-
-let half='top', outs=0, bases=0;
-
-function setHalf(v){
-  half=v;
-  $('topBtn').classList.toggle('active',v==='top');
-  $('botBtn').classList.toggle('active',v==='bottom');
-  update();
+function getv(r, names){
+  for(const n of names) if(Object.prototype.hasOwnProperty.call(r,n)) return r[n];
+  const keys=Object.keys(r);
+  for(const n of names){const k=keys.find(k=>k.trim().toLowerCase()===n.trim().toLowerCase());if(k) return r[k]}
+  return '';
 }
-$('topBtn').onclick=()=>setHalf('top');
-$('botBtn').onclick=()=>setHalf('bottom');
-
-$('nextHalf').onclick=()=>{
-  let inn=Number($('inning').value);
-  if(half==='top'){ setHalf('bottom'); }
-  else { if(inn<12) $('inning').value=String(inn+1); setHalf('top'); }
-  update();
-};
-
-document.querySelectorAll('.outBtn').forEach(b=>{
-  b.onclick=()=>{
-    outs=Number(b.dataset.o);
-    document.querySelectorAll('.outBtn').forEach(x=>x.classList.toggle('active',x===b));
-    update();
+function parseCSV(text){
+  text=String(text||'').replace(/^\uFEFF/,'');
+  const rows=[]; let row=[], field='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"' && text[i+1]==='"'){field+='"';i++}
+      else if(c==='"') q=false;
+      else field+=c;
+    } else {
+      if(c==='"') q=true;
+      else if(c===','){row.push(field);field=''}
+      else if(c==='\n'){row.push(field);rows.push(row);row=[];field=''}
+      else if(c!=='\r') field+=c;
+    }
+  }
+  if(field.length||row.length){row.push(field);rows.push(row)}
+  if(rows.length<2) return [];
+  const h=rows[0].map(x=>x.trim());
+  return rows.slice(1).filter(r=>r.some(x=>String(x).trim()!=='')).map(r=>Object.fromEntries(h.map((k,i)=>[k,r[i]??''])));
+}
+function is2026(r){
+  const s=num(getv(r,['シーズン','Season']));
+  if(s!==SEASON) return false;
+  const gt=String(getv(r,['ゲームタイプ','Game Type','GameType'])).toLowerCase();
+  return !gt || gt.includes('公式') || gt.includes('reg') || gt.includes('regular');
+}
+function reduceBat(rows){
+  const out=[];
+  for(const r of rows){
+    if(!is2026(r)) continue;
+    const team=canonTeam(getv(r,['球団 (Long)','球団','Team','Team (Long)']));
+    const pa=num(getv(r,['打席','PA'])); if(!team||pa<=0) continue;
+    const name=String(getv(r,['名前','Name'])).trim();
+    out.push({id:String(getv(r,['PlayerID','PlayerId'])).trim()||name,team,name,pa,
+      ab:num(getv(r,['打数','AB'])),h:num(getv(r,['安打','H'])),s1:num(getv(r,['一塁打','1B'])),
+      d2:num(getv(r,['二塁打','2B'])),t3:num(getv(r,['三塁打','3B'])),hr:num(getv(r,['本塁打','HR'])),
+      bb:num(getv(r,['四球','BB'])),hbp:num(getv(r,['死球','DB','HBP'])),k:num(getv(r,['三振','K','SO'])),
+      dp:num(getv(r,['併殺','DP','GDP'])),sh:num(getv(r,['犠打','SH'])),sf:num(getv(r,['犠飛','SF']))});
+  }
+  return out;
+}
+function reducePit(rows){
+  const out=[];
+  for(const r of rows){
+    if(!is2026(r)) continue;
+    const team=canonTeam(getv(r,['球団 (Long)','球団','Team','Team (Long)']));
+    const bf=num(getv(r,['打者','BF','Batters Faced'])); if(!team||bf<=0) continue;
+    const name=String(getv(r,['名前','Name'])).trim();
+    out.push({id:String(getv(r,['PlayerID','PlayerId'])).trim()||name,team,name,bf,
+      h:num(getv(r,['安打','H'])),hr:num(getv(r,['本塁打','HR'])),bb:num(getv(r,['四球','BB'])),
+      hbp:num(getv(r,['死球','DB','HBP'])),k:num(getv(r,['三振','K','SO'])),r:num(getv(r,['失点','R']))});
+  }
+  return out;
+}
+function sum(arr,key){return arr.reduce((a,x)=>a+(x[key]||0),0)}
+function ratesBat(arr){
+  const pa=sum(arr,'pa')||1;
+  return {n:pa,s1:sum(arr,'s1')/pa,d2:sum(arr,'d2')/pa,t3:sum(arr,'t3')/pa,hr:sum(arr,'hr')/pa,bb:sum(arr,'bb')/pa,hbp:sum(arr,'hbp')/pa,k:sum(arr,'k')/pa,dp:sum(arr,'dp')/pa};
+}
+function ratesPit(arr){
+  const bf=sum(arr,'bf')||1;
+  return {n:bf,h:sum(arr,'h')/bf,hr:sum(arr,'hr')/bf,bb:sum(arr,'bb')/bf,hbp:sum(arr,'hbp')/bf,k:sum(arr,'k')/bf,r:sum(arr,'r')/bf};
+}
+function buildModel(){
+  if(!stats?.bat?.length || !stats?.pit?.length){model=null;return}
+  const lb=ratesBat(stats.bat), lp=ratesPit(stats.pit);
+  const teamB={}, teamP={}, byBat={}, byPit={};
+  for(const [k] of TEAMS){
+    teamB[k]=ratesBat(stats.bat.filter(x=>x.team===k));
+    teamP[k]=ratesPit(stats.pit.filter(x=>x.team===k));
+    byBat[k]=stats.bat.filter(x=>x.team===k).sort((a,b)=>b.pa-a.pa);
+    byPit[k]=stats.pit.filter(x=>x.team===k).sort((a,b)=>b.bf-a.bf);
+  }
+  model={lb,lp,teamB,teamP,byBat,byPit};
+}
+function smooth(count,n,prior,weight){return (count+prior*weight)/(n+weight)}
+function playerBatRates(p){
+  const L=model.lb,W=120,n=p?.pa||0;
+  if(!p) return L;
+  return {s1:smooth(p.s1,n,L.s1,W),d2:smooth(p.d2,n,L.d2,W),t3:smooth(p.t3,n,L.t3,W),hr:smooth(p.hr,n,L.hr,W),
+    bb:smooth(p.bb,n,L.bb,W),hbp:smooth(p.hbp,n,L.hbp,W),k:smooth(p.k,n,L.k,W),dp:smooth(p.dp,n,L.dp,W)};
+}
+function pitcherRates(p,team){
+  if(p){
+    const L=model.lp,W=180,n=p.bf;
+    return {h:smooth(p.h,n,L.h,W),hr:smooth(p.hr,n,L.hr,W),bb:smooth(p.bb,n,L.bb,W),hbp:smooth(p.hbp,n,L.hbp,W),k:smooth(p.k,n,L.k,W)};
+  }
+  const t=model.teamP[team]||model.lp;
+  return {h:t.h,hr:t.hr,bb:t.bb,hbp:t.hbp,k:t.k};
+}
+function eventProbs(batter,pitcher,defTeam){
+  const L=model.lb, LP=model.lp, B=playerBatRates(batter), P=pitcherRates(pitcher,defTeam);
+  const eps=1e-6, pNon=Math.max(eps,P.h-P.hr), lpNon=Math.max(eps,LP.h-LP.hr);
+  const vals={
+    '1B':L.s1*(B.s1/Math.max(eps,L.s1))*(pNon/lpNon),
+    '2B':L.d2*(B.d2/Math.max(eps,L.d2))*(pNon/lpNon),
+    '3B':L.t3*(B.t3/Math.max(eps,L.t3))*(pNon/lpNon),
+    'HR':L.hr*(B.hr/Math.max(eps,L.hr))*(P.hr/Math.max(eps,LP.hr)),
+    'BB':L.bb*(B.bb/Math.max(eps,L.bb))*(P.bb/Math.max(eps,LP.bb)),
+    'HBP':L.hbp*(B.hbp/Math.max(eps,L.hbp))*(P.hbp/Math.max(eps,LP.hbp)),
+    'K':L.k*(B.k/Math.max(eps,L.k))*(P.k/Math.max(eps,LP.k))
   };
-});
-[['b1',1],['b2',2],['b3',4]].forEach(([id,bit])=>{
-  $(id).onclick=()=>{
-    bases ^= bit;
-    $(id).classList.toggle('on',Boolean(bases&bit));
-    update();
-  };
-});
-
-['homeAway','inning','tigersScore','oppScore'].forEach(id=>{
-  $(id).addEventListener('input',update);
-  $(id).addEventListener('change',update);
-});
-
-// Stable pseudo-random generator so the same state always gives the same result.
-function xmur3(str){
-  let h=1779033703^str.length;
-  for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
-  return function(){h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return (h^=h>>>16)>>>0}
+  for(const k in vals) vals[k]=Math.max(0,Math.min(.55,vals[k]));
+  let sumv=Object.values(vals).reduce((a,b)=>a+b,0);
+  if(sumv>.92){const f=.92/sumv;for(const k in vals)vals[k]*=f;sumv=.92}
+  vals.OUT=1-sumv;
+  vals.dpCond=Math.min(.35, safeDiv(B.dp, Math.max(.01,vals.OUT)));
+  return vals;
 }
-function mulberry32(a){
-  return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return ((t^t>>>14)>>>0)/4294967296}
+function pickEvent(pr,rng){
+  let x=rng(),c=0;
+  for(const k of ['1B','2B','3B','HR','BB','HBP','K','OUT']){c+=pr[k];if(x<c)return k}
+  return 'OUT';
 }
-function poisson(lambda,rng){
-  if(lambda<=0) return 0;
-  let L=Math.exp(-lambda), k=0, p=1;
-  do{ k++; p*=rng(); }while(p>L);
-  return k-1;
+function forceWalk(b){
+  let runs=0;
+  const r1=!!(b&1),r2=!!(b&2),r3=!!(b&4);
+  if(r1&&r2&&r3) runs++;
+  let nb=b;
+  if(r2&&r1) nb|=4;
+  if(r1) nb|=2;
+  nb|=1;
+  return [nb,runs];
 }
-function battingTeam(homeAway, half){
-  // top: away bats, bottom: home bats
-  const tigersAreHome = homeAway==='home';
-  const tigersBat = (half==='top' && !tigersAreHome) || (half==='bottom' && tigersAreHome);
-  return tigersBat ? 'T' : 'O';
+function applyEvent(event,b,o,rng,dpCond){
+  let runs=0, nb=b, no=o;
+  const r1=!!(b&1),r2=!!(b&2),r3=!!(b&4);
+  if(event==='HR'){runs=1+(r1?1:0)+(r2?1:0)+(r3?1:0);nb=0}
+  else if(event==='3B'){runs=(r1?1:0)+(r2?1:0)+(r3?1:0);nb=4}
+  else if(event==='2B'){
+    if(r3)runs++; if(r2)runs++;
+    nb=2;
+    if(r1){if(rng()<.55)runs++; else nb|=4}
+  } else if(event==='1B'){
+    if(r3)runs++;
+    nb=1;
+    if(r2){if(rng()<.62)runs++; else nb|=4}
+    if(r1){if(rng()<.28)nb|=4; else nb|=2}
+  } else if(event==='BB'||event==='HBP'){[nb,runs]=forceWalk(b)}
+  else {
+    if(event==='OUT' && r1 && o<2 && rng()<dpCond){no+=2;nb&=~1}
+    else no++;
+  }
+  return {b:nb,o:Math.min(no,3),runs};
 }
-
-function simulate(){
-  const inn0=Number($('inning').value);
-  const hs=Math.max(0,Number($('tigersScore').value)||0);
-  const os=Math.max(0,Number($('oppScore').value)||0);
-  const ha=$('homeAway').value;
-  const stateKey=[inn0,half,outs,bases,hs,os,ha].join('|');
-  const seed=xmur3(stateKey)();
-  const rng=mulberry32(seed);
-
-  // A full fresh half-inning uses the 0-out, bases-empty expectation.
-  const baseLambda=RE[0][0];
-  const currentLambda=RE[bases][outs];
-
-  let w=0,d=0,l=0;
-  const N=20000;
-
+function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}return()=>{h=Math.imul(h^(h>>>16),2246822507);h=Math.imul(h^(h>>>13),3266489909);return(h^=h>>>16)>>>0}}
+function mulberry32(a){return()=>{let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function poisson(lambda,rng){let L=Math.exp(-lambda),k=0,p=1;do{k++;p*=rng()}while(p>L);return k-1}
+function battingTeam(ha,h){const homeT=ha==='home';return ((h==='top'&&!homeT)||(h==='bottom'&&homeT))?TEAM_T:$('opponent').value}
+function fieldingTeam(ha,h){return battingTeam(ha,h)===TEAM_T?$('opponent').value:TEAM_T}
+function getPlayerById(team,id,type){const arr=type==='bat'?model?.byBat?.[team]:model?.byPit?.[team];return arr?.find(x=>x.id===id)||null}
+function lineupIds(team){const prefix=team===TEAM_T?'tLine':'oLine';return Array.from({length:9},(_,i)=>$(prefix+i)?.value||'')}
+function currentPos(team){return Number(team===TEAM_T?$('tigersBatterPos').value:$('oppBatterPos').value)||0}
+function currentPitcherFor(team){const id=team===TEAM_T?$('tigersPitcher').value:$('oppPitcher').value;return getPlayerById(team,id,'pit')}
+function simulateHalf(team,defTeam,startOut,startBases,startPos,pitcher,rng,walkoffFn){
+  let o=startOut,b=startBases,pos=startPos,runs=0;
+  const lu=lineupIds(team);
+  let guard=0;
+  while(o<3 && guard++<80){
+    const batter=getPlayerById(team,lu[pos%9],'bat') || model.byBat[team]?.[0] || null;
+    const pr=eventProbs(batter,pitcher,defTeam);
+    const ev=pickEvent(pr,rng), res=applyEvent(ev,b,o,rng,pr.dpCond);
+    b=res.b;o=res.o;runs+=res.runs;pos=(pos+1)%9;
+    if(walkoffFn && res.runs>0 && walkoffFn(runs)) break;
+  }
+  return {runs,pos};
+}
+function simulateInningMetrics(){
+  if(!model) return null;
+  const ha=$('homeAway').value, team=battingTeam(ha,half), def=fieldingTeam(ha,half);
+  const pit=currentPitcherFor(def), pos=currentPos(team);
+  const seed=xmur3(['inning',team,def,outs,bases,pos,pit?.id||'team',stats.updated].join('|'))();
+  const rng=mulberry32(seed); let any=0,total=0,N=3500;
+  for(let i=0;i<N;i++){const r=simulateHalf(team,def,outs,bases,pos,pit,rng,null).runs;total+=r;if(r>0)any++}
+  return {prob:any/N*100,exp:total/N};
+}
+function simulateWin(){
+  if(!model) return baselineWin();
+  const ha=$('homeAway').value, opp=$('opponent').value, inn0=Number($('inning').value);
+  const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
+  const state=[inn0,half,outs,bases,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated].join('|');
+  const rng=mulberry32(xmur3(state)()); let w=0,d=0,l=0,N=4500;
   for(let s=0;s<N;s++){
-    let t=hs,o=os;
-    let inn=inn0;
-    let h=half;
-    let first=true;
-    let finished=false;
-
-    while(!finished){
-      const team=battingTeam(ha,h);
-      const lambda=first ? currentLambda : baseLambda;
-      const runs=poisson(lambda,rng);
-      if(team==='T') t+=runs; else o+=runs;
-
-      const homeIsT = ha==='home';
-      const homeScore = homeIsT ? t:o;
-      const awayScore = homeIsT ? o:t;
-
-      // Walk-off / no bottom needed logic, approximated at half-inning level.
-      if(h==='top' && inn>=9 && homeScore>awayScore){
-        // Home team is already ahead after the top half: no bottom half is played.
-        finished=true; break;
-      }
-      if(h==='bottom' && inn>=9 && homeScore!==awayScore){
-        // After a completed bottom half from the 9th onward, any non-tie is final.
-        finished=true; break;
-      }
-
-      if(h==='top'){
-        h='bottom';
-      }else{
-        if(inn>=12){
-          // Tied after the bottom of the 12th => draw.
-          finished=true; break;
-        }
-        inn+=1; h='top';
-      }
+    let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
+    const posMap={[TEAM_T]:currentPos(TEAM_T),[opp]:currentPos(opp)};
+    while(!done){
+      const bat=battingTeam(ha,h),def=bat===TEAM_T?opp:TEAM_T;
+      const isHome=(ha==='home'?bat===TEAM_T:bat===opp);
+      const currentPit=first?currentPitcherFor(def):null;
+      const homeIsT=ha==='home';
+      const walkoff=(h==='bottom'&&inn>=9)?(added)=>{
+        const tt=t+(bat===TEAM_T?added:0),oo=o+(bat===opp?added:0);
+        const homeScore=homeIsT?tt:oo, awayScore=homeIsT?oo:tt;
+        return homeScore>awayScore;
+      }:null;
+      const startOut=first?outs:0,startBases=first?bases:0;
+      const res=simulateHalf(bat,def,startOut,startBases,posMap[bat],currentPit,rng,walkoff);
+      posMap[bat]=res.pos; if(bat===TEAM_T)t+=res.runs; else o+=res.runs;
+      const homeScore=homeIsT?t:o,awayScore=homeIsT?o:t;
+      if(h==='bottom'&&inn>=9&&homeScore>awayScore){done=true;break}
+      if(h==='top'&&inn>=9&&homeScore>awayScore){done=true;break}
+      if(h==='bottom'&&inn>=9&&homeScore!==awayScore){done=true;break}
+      if(h==='top')h='bottom'; else {if(inn>=12){done=true;break}inn++;h='top'}
       first=false;
     }
-
-    if(t>o) w++;
-    else if(t===o) d++;
-    else l++;
+    if(t>o)w++;else if(t===o)d++;else l++;
   }
   return {w:w/N*100,d:d/N*100,l:l/N*100};
 }
+function baselineWin(){
+  const inn0=Number($('inning').value),hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value)),ha=$('homeAway').value;
+  const rng=mulberry32(xmur3([inn0,half,outs,bases,hs,os,ha].join('|'))()); let w=0,d=0,l=0,N=9000;
+  for(let s=0;s<N;s++){
+    let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
+    while(!done){
+      const bat=battingTeam(ha,h),lambda=first?RE[bases][outs]:RE[0][0],runs=poisson(lambda,rng);
+      if(bat===TEAM_T)t+=runs;else o+=runs;
+      const homeIsT=ha==='home',homeScore=homeIsT?t:o,awayScore=homeIsT?o:t;
+      if(h==='top'&&inn>=9&&homeScore>awayScore){done=true;break}
+      if(h==='bottom'&&inn>=9&&homeScore!==awayScore){done=true;break}
+      if(h==='top')h='bottom';else{if(inn>=12){done=true;break}inn++;h='top'}
+      first=false;
+    }
+    if(t>o)w++;else if(t===o)d++;else l++;
+  } return {w:w/N*100,d:d/N*100,l:l/N*100};
+}
 
+function setupStatic(){
+  for(let i=1;i<=12;i++){const o=document.createElement('option');o.value=i;o.textContent=`${i}回`;$('inning').appendChild(o)}
+  for(const [k,n] of TEAMS.filter(x=>x[0]!==TEAM_T)){const o=document.createElement('option');o.value=k;o.textContent=n;$('opponent').appendChild(o)}
+  $('opponent').value='Giants';
+  for(let i=0;i<9;i++){
+    for(const id of ['tigersLineup','oppLineup']){const d=document.createElement('div');d.className='slot';d.textContent=`${i+1}番`;const s=document.createElement('select');s.id=(id==='tigersLineup'?'tLine':'oLine')+i;d.dataset.for=s.id;$(id).append(d,s);s.addEventListener('change',()=>{refreshBatterPosLabels();scheduleUpdate()})}
+  }
+  for(let i=0;i<9;i++){for(const id of ['tigersBatterPos','oppBatterPos']){const o=document.createElement('option');o.value=i;o.textContent=`${i+1}番`;$(id).appendChild(o)}}
+  $('inning').value='1';
+}
+function fillPlayerSelect(sel,arr,includeTeam=true){
+  const old=sel.value;sel.innerHTML='<option value="">球団平均 / 未選択</option>';
+  for(const p of arr||[]){const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name}${includeTeam?'':''}`;sel.appendChild(o)}
+  if([...sel.options].some(o=>o.value===old))sel.value=old;
+}
+function fillLineup(team,prefix){
+  const arr=model?.byBat?.[team]||[];
+  for(let i=0;i<9;i++){
+    const sel=$(prefix+i),old=sel.value;sel.innerHTML='';
+    for(const p of arr){const o=document.createElement('option');o.value=p.id;o.textContent=`${p.name} (${p.pa}打席)`;sel.appendChild(o)}
+    if([...sel.options].some(o=>o.value===old))sel.value=old;
+    else if(arr[i])sel.value=arr[i].id;
+  }
+}
+function refreshBatterPosLabels(){
+  const opp=$('opponent').value;
+  for(const [team,selId,prefix] of [[TEAM_T,'tigersBatterPos','tLine'],[opp,'oppBatterPos','oLine']]){
+    const sel=$(selId),current=sel.value;
+    for(let i=0;i<9;i++){
+      const id=$(prefix+i)?.value, p=getPlayerById(team,id,'bat');
+      if(sel.options[i]) sel.options[i].textContent=`${i+1}番${p?` ${p.name}`:''}`;
+    }
+    sel.value=current;
+  }
+}
+function refreshPlayerUI(){
+  const opp=$('opponent').value;
+  $('oppLineupTitle').textContent=TEAM_NAME[opp]||'相手';
+  if(!model){
+    $('playerCard').style.opacity=.55;
+    for(const s of document.querySelectorAll('#playerCard select'))s.disabled=true;
+    return;
+  }
+  $('playerCard').style.opacity=1;
+  for(const s of document.querySelectorAll('#playerCard select'))s.disabled=false;
+  fillLineup(TEAM_T,'tLine');fillLineup(opp,'oLine');refreshBatterPosLabels();
+  fillPlayerSelect($('tigersPitcher'),model.byPit[TEAM_T]);
+  fillPlayerSelect($('oppPitcher'),model.byPit[opp]);
+}
+function updateStatus(){
+  if(stats?.bat?.length&&stats?.pit?.length){
+    $('dataStatus').innerHTML=`<strong>選手モデルON</strong><br>2026打者 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>端末への読込：${new Date(stats.updated).toLocaleString('ja-JP')}`;
+    $('modelBadge').className='badge good';$('modelBadge').textContent='2026・12球団選手モデル';
+  }else{
+    $('dataStatus').textContent='選手データ未読込。現在は従来のNPB平均モデルで動作します。';
+    $('modelBadge').className='badge warn';$('modelBadge').textContent='ベースラインモデル';
+  }
+}
+function saveStats(){try{localStorage.setItem('tigersStatsV3',JSON.stringify(stats))}catch(e){toast('保存容量エラー')}}
+function loadStats(){try{const x=localStorage.getItem('tigersStatsV3');if(x)stats=JSON.parse(x)}catch(e){}buildModel();updateStatus();refreshPlayerUI()}
+async function importBat(file){
+  const rows=parseCSV(await file.text()),bat=reduceBat(rows);
+  if(bat.length<30)throw new Error('2026年の打撃データを十分に認識できませんでした');
+  stats=stats||{};stats.bat=bat;stats.updated=Date.now();saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast(`打者 ${bat.length}人を読み込みました`);
+}
+async function importPit(file){
+  const rows=parseCSV(await file.text()),pit=reducePit(rows);
+  if(pit.length<30)throw new Error('2026年の投手データを十分に認識できませんでした');
+  stats=stats||{};stats.pit=pit;stats.updated=Date.now();saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました`);
+}
+function exportData(){
+  if(!model){toast('先に打撃・投手CSVを読み込んでください');return}
+  const blob=new Blob([JSON.stringify({version:3,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function importJson(file){
+  const x=JSON.parse(await file.text());if(x.season!==SEASON||!Array.isArray(x.bat)||!Array.isArray(x.pit))throw new Error('対応する共有データではありません');
+  stats={bat:x.bat,pit:x.pit,updated:x.updated||Date.now()};saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast('共有データを読み込みました');
+}
+function setHalf(v){half=v;$('topBtn').classList.toggle('active',v==='top');$('botBtn').classList.toggle('active',v==='bottom');scheduleUpdate()}
+function scheduleUpdate(){clearTimeout(calcTimer);calcTimer=setTimeout(update,40)}
 function update(){
-  const rprob=RP[bases][outs];
-  const re=RE[bases][outs];
-  $('runProb').innerHTML=`${rprob.toFixed(1)}<span class="unit">%</span>`;
-  $('runExp').innerHTML=`${re.toFixed(2)}<span class="unit"> 点</span>`;
-
-  const p=simulate();
-  $('winBig').innerHTML=`${p.w.toFixed(1)}<span class="unit">%</span>`;
-  $('wText').textContent=`${p.w.toFixed(1)}%`;
-  $('dText').textContent=`${p.d.toFixed(1)}%`;
-  $('lText').textContent=`${p.l.toFixed(1)}%`;
-  $('wp').style.width=p.w+'%'; $('dp').style.width=p.d+'%'; $('lp').style.width=p.l+'%';
-
-  const inn=$('inning').value;
-  const batting=battingTeam($('homeAway').value,half)==='T'?'阪神の攻撃':'相手の攻撃';
-  const score=`阪神 ${Number($('tigersScore').value)||0} − ${Number($('oppScore').value)||0} 相手`;
-  const baseNames=[];
-  if(bases&1)baseNames.push('一'); if(bases&2)baseNames.push('二'); if(bases&4)baseNames.push('三');
-  const baseText=baseNames.length?baseNames.join('・')+'塁':'走者なし';
-  $('statusText').innerHTML=`<b>${inn}回${half==='top'?'表':'裏'}・${batting}</b><br>${score}<br>${outs}アウト・${baseText}`;
+  const ha=$('homeAway').value,opp=$('opponent').value,bat=battingTeam(ha,half);
+  $('attackLabel').textContent=`攻撃側：${TEAM_NAME[bat]}`;
+  let prob=RP[bases][outs],exp=RE[bases][outs];
+  if(model){const m=simulateInningMetrics();if(m){prob=m.prob;exp=m.exp;$('runModelLabel').textContent='2026打者 × 現在投手モデル';$('runNote').textContent='現在打者・打順・投手を反映したシミュレーション。'}}
+  else{$('runModelLabel').textContent='NPB 24状況ベースライン';$('runNote').textContent='2023–2025 NPBのアウト数×走者状況の集計値。'}
+  $('runProb').innerHTML=`${prob.toFixed(1)}<span class="unit">%</span>`;$('runExp').innerHTML=`${exp.toFixed(2)}<span class="unit"> 点</span>`;
+  const p=simulateWin();$('winBig').innerHTML=`${p.w.toFixed(1)}<span class="unit">%</span>`;$('wText').textContent=`${p.w.toFixed(1)}%`;$('dText').textContent=`${p.d.toFixed(1)}%`;$('lText').textContent=`${p.l.toFixed(1)}%`;
+  $('wp').style.width=p.w+'%';$('dp').style.width=p.d+'%';$('lp').style.width=p.l+'%';
+  $('winModelLabel').textContent=model?'12球団・選手別 4,500試合シミュレーション':'NPB平均 簡易シミュレーション';
+  const bn=[];if(bases&1)bn.push('一');if(bases&2)bn.push('二');if(bases&4)bn.push('三');
+  $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・${bn.length?bn.join('・')+'塁':'走者なし'}`;
 }
-update();
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
+setupStatic();
+$('topBtn').onclick=()=>setHalf('top');$('botBtn').onclick=()=>setHalf('bottom');
+$('nextHalf').onclick=()=>{let i=Number($('inning').value);if(half==='top')setHalf('bottom');else{if(i<12)$('inning').value=String(i+1);setHalf('top')}outs=0;bases=0;document.querySelectorAll('.outBtn').forEach(x=>x.classList.toggle('active',x.dataset.o==='0'));document.querySelectorAll('.base').forEach(x=>x.classList.remove('on'));scheduleUpdate()};
+document.querySelectorAll('.outBtn').forEach(b=>b.onclick=()=>{outs=Number(b.dataset.o);document.querySelectorAll('.outBtn').forEach(x=>x.classList.toggle('active',x===b));scheduleUpdate()});
+[['b1',1],['b2',2],['b3',4]].forEach(([id,bit])=>$(id).onclick=()=>{bases^=bit;$(id).classList.toggle('on',Boolean(bases&bit));scheduleUpdate()});
+['homeAway','inning','tigersScore','oppScore','tigersBatterPos','oppBatterPos','tigersPitcher','oppPitcher'].forEach(id=>{$(id).addEventListener('input',scheduleUpdate);$(id).addEventListener('change',scheduleUpdate)});
+$('opponent').addEventListener('change',()=>{refreshPlayerUI();scheduleUpdate()});
+$('importBatBtn').onclick=()=>$('batFile').click();$('importPitBtn').onclick=()=>$('pitFile').click();$('importDataBtn').onclick=()=>$('jsonFile').click();$('exportDataBtn').onclick=exportData;
+$('batFile').onchange=async e=>{try{if(e.target.files[0])await importBat(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
+$('pitFile').onchange=async e=>{try{if(e.target.files[0])await importPit(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
+$('jsonFile').onchange=async e=>{try{if(e.target.files[0])await importJson(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
+loadStats();update();
+if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
