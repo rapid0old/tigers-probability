@@ -14,7 +14,7 @@
 :root{--bg:#0f0f10;--card:#19191b;--card2:#222225;--text:#f6f6f6;--muted:#a9a9ae;--line:#333338;--accent:#f2d21b;--good:#61d37a;--bad:#ff6b6b;--blue:#67a8ff}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent}
-.wrap{max-width:720px;margin:0 auto;padding:16px 14px 50px}
+.wrap{max-width:720px;margin:0 auto;padding:16px 14px 118px}
 header{display:flex;align-items:center;gap:10px;margin:4px 2px 16px}
 .logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;color:#111;font-size:24px;font-weight:900}
 h1{font-size:20px;margin:0;line-height:1.2}
@@ -61,6 +61,11 @@ summary{cursor:pointer;font-weight:800;font-size:14px}
 .runnerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .playGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .playGrid button{min-height:46px}
+.countGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.countSegment{display:grid;gap:6px}
+.countSegment.balls{grid-template-columns:repeat(4,1fr)}
+.countSegment.strikes{grid-template-columns:repeat(3,1fr)}
+.countBtn{min-width:0;padding:10px 4px}
 .predictionTitle{font-size:15px;font-weight:850;margin:4px 0 10px;line-height:1.45}
 .predictionGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .probItem{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:11px}
@@ -71,14 +76,28 @@ summary{cursor:pointer;font-weight:800;font-size:14px}
 hr{border:0;border-top:1px solid var(--line);margin:14px 0}
 footer{font-size:11px;color:#85858b;line-height:1.6;padding:6px 4px}
 a{color:#b7cfff}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#29292d;border:1px solid #48484f;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;max-width:90%;display:none;z-index:20}
-@media(max-width:520px){.runnerGrid,.predictionGrid{grid-template-columns:1fr}.playGrid{grid-template-columns:1fr 1fr}}
+.toast{position:fixed;left:50%;bottom:calc(82px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#29292d;border:1px solid #48484f;color:#fff;padding:10px 14px;border-radius:12px;font-size:13px;max-width:90%;display:none;z-index:20}
+.probDock{position:fixed;z-index:15;left:50%;bottom:calc(8px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(704px,calc(100% - 16px));display:grid;grid-template-columns:repeat(4,1fr);background:#111114;border:1px solid #4a4a50;box-shadow:0 8px 30px rgba(0,0,0,.48);overflow:hidden}
+.probDock button{border:0;border-right:1px solid var(--line);border-radius:0;background:transparent;padding:9px 4px;min-width:0;height:62px}
+.probDock button:last-child{border-right:0}
+.dockLabel{display:block;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dockValue{display:block;color:var(--accent);font-size:17px;font-weight:900;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.probDialog{width:min(460px,calc(100% - 28px));color:var(--text);background:var(--card);border:1px solid #55555c;border-radius:14px;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.65)}
+.probDialog::backdrop{background:rgba(0,0,0,.72)}
+.dialogClose{position:absolute;right:10px;top:10px;width:38px;height:38px;padding:0;font-size:24px;line-height:1}
+.dialogLabel{font-size:13px;color:var(--muted);padding-right:40px}
+.dialogValue{font-size:44px;font-weight:900;color:var(--accent);margin:12px 0 8px;line-height:1.1}
+.dialogBody{font-size:13px;line-height:1.65;color:#d7d7db}
+.dialogBreakdown{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}
+.dialogBreakdown div{background:var(--card2);border:1px solid var(--line);padding:9px;border-radius:8px}
+.dialogBreakdown b{float:right;color:var(--accent)}
+@media(max-width:520px){.runnerGrid,.predictionGrid{grid-template-columns:1fr}.playGrid{grid-template-columns:1fr 1fr}.dockLabel{font-size:9px}.dockValue{font-size:15px}}
 @media(max-width:390px){.metric .value{font-size:24px}.wrap{padding-left:10px;padding-right:10px}.row{grid-template-columns:1fr}.actionGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.5 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.6 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -104,6 +123,11 @@ a{color:#b7cfff}
   <label>アウト</label>
   <div class="segment"><button class="outBtn active" data-o="0">0</button><button class="outBtn" data-o="1">1</button><button class="outBtn" data-o="2">2</button></div>
   <div style="height:12px"></div>
+  <label>ボール・ストライク</label>
+  <div class="countGrid">
+    <div><label>ボール</label><div class="countSegment balls"><button class="ballBtn countBtn active" data-count="0">0</button><button class="ballBtn countBtn" data-count="1">1</button><button class="ballBtn countBtn" data-count="2">2</button><button class="ballBtn countBtn" data-count="3">3</button></div></div>
+    <div><label>ストライク</label><div class="countSegment strikes"><button class="strikeBtn countBtn active" data-count="0">0</button><button class="strikeBtn countBtn" data-count="1">1</button><button class="strikeBtn countBtn" data-count="2">2</button></div></div>
+  </div>
   <label>走者（タップでON/OFF）</label>
   <div class="bases"><button class="base" id="b2"><span>二塁</span></button><button class="base" id="b3"><span>三塁</span></button><button class="base" id="b1"><span>一塁</span></button></div>
   <div class="runnerGrid">
@@ -203,7 +227,7 @@ a{color:#b7cfff}
   <div class="note">
     <b>選手モデルのロジック</b><br>
     初期状態では、2026年の12球団の主要打者151人・主要投手99人から作った<b>打撃力係数（wOBAベース）</b>と<b>投手係数（FIPベース）</b>を内蔵しています。打席数・投球回が少ない選手ほどリーグ平均へ縮約して、小標本の暴れを抑えています。現在打者から近い3人と現在投手を使って、24状況の得点確率・得点期待値を補正し、残り試合をシミュレーションします。<br><br>
-    次打席予測は、詳細CSVがある場合は打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。CSVがない場合は、内蔵した打撃力・投手係数から近似分布を表示します。守備・球場・左右別・対戦相性・代打/継投予測はまだ未反映です。
+    次打席予測は、詳細CSVがある場合は打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。CSVがない場合は、内蔵した打撃力・投手係数から近似分布を表示します。現在のボール・ストライクは、四球・三振・インプレーの到達確率と打者有利/投手有利の差を使う試用補正として、現在の打席だけに反映します。守備・球場・左右別・対戦相性・代打/継投予測はまだ未反映です。
   </div>
 </section>
 
@@ -211,9 +235,22 @@ a{color:#b7cfff}
 得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
 内蔵選手名：<a href="https://npb.jp/bis/teams/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 2026年度選手一覧</a>、<a href="https://m.hanshintigers.jp/data/player_list/2026" target="_blank" rel="noopener noreferrer">阪神タイガース公式 2026選手プロフィール</a>。<br>
 初期選手係数：NPB公式の2026個人成績・チーム成績、およびv0.4内蔵係数を基にした派生値。生の成績表は同梱せず、正規化・縮約した係数のみを内蔵しています。<br>
+カウント補正の方向性：<a href="https://www.mlb.com/glossary/statcast/catcher-framing" target="_blank" rel="noopener noreferrer">MLB公式 Statcast Glossary</a>の公開例（2025年の1-0後と0-1後のOPS差）を確認し、NPB実測値とは区別した保守的な試用係数として実装しています。<br>
 非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
 </footer>
 </div>
+<div class="probDock" id="probDock" aria-label="確率サマリー" aria-live="polite">
+  <button data-detail="run"><span class="dockLabel">この回1点+</span><span class="dockValue" id="dockRunProb">--%</span></button>
+  <button data-detail="exp"><span class="dockLabel">得点期待値</span><span class="dockValue" id="dockRunExp">--</span></button>
+  <button data-detail="win"><span class="dockLabel">阪神勝率</span><span class="dockValue" id="dockWin">--%</span></button>
+  <button data-detail="pa"><span class="dockLabel">次打席</span><span class="dockValue" id="dockPA">--</span></button>
+</div>
+<dialog class="probDialog" id="probDialog">
+  <form method="dialog"><button class="dialogClose" aria-label="閉じる">×</button></form>
+  <div class="dialogLabel" id="dialogLabel">--</div>
+  <div class="dialogValue" id="dialogValue">--</div>
+  <div class="dialogBody" id="dialogBody"></div>
+</dialog>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -251,7 +288,7 @@ function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
 const jaCollator=new Intl.Collator('ja-JP',{numeric:true,sensitivity:'base'});
 
 const $ = id => document.getElementById(id);
-let half='top', outs=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[];
+let half='top', outs=0, balls=0, strikes=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[], lastPrediction=null, lastSummary=null;
 
 function toast(msg){const e=$('toast');e.textContent=msg;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
 function num(x){const v=Number(String(x??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
@@ -484,15 +521,15 @@ function findPlayerIdByName(team,name,type='bat'){
   const hit=arr.find(p=>compactName(p.name)===target||compactName(displayName(p))===target);
   return hit?.id||'';
 }
-function simulateHalf(team,defTeam,startOut,startBases,startPos,pitcher,rng,walkoffFn){
+function simulateHalf(team,defTeam,startOut,startBases,startPos,pitcher,rng,walkoffFn,firstCount=null){
   let o=startOut,b=startBases,pos=startPos,runs=0;
   const lu=lineupIds(team);
-  let guard=0;
+  let guard=0,firstPlate=true;
   while(o<3 && guard++<80){
     const batter=lineupBatter(team,lu[pos%9]) || model.byBat[team]?.[0] || null;
-    const pr=eventProbs(batter,pitcher,defTeam);
+    const basePr=eventProbs(batter,pitcher,defTeam),pr=firstPlate&&firstCount?adjustForCount(basePr,firstCount.balls,firstCount.strikes):basePr;
     const ev=pickEvent(pr,rng), res=applyEvent(ev,b,o,rng,pr.dpCond);
-    b=res.b;o=res.o;runs+=res.runs;pos=(pos+1)%9;
+    b=res.b;o=res.o;runs+=res.runs;pos=(pos+1)%9;firstPlate=false;
     if(walkoffFn && res.runs>0 && walkoffFn(runs)) break;
   }
   return {runs,pos};
@@ -501,9 +538,9 @@ function simulateInningMetrics(){
   if(!model) return null;
   const ha=$('homeAway').value, team=battingTeam(ha,half), def=fieldingTeam(ha,half);
   const pit=currentPitcherFor(def), pos=currentPos(team);
-  const seed=xmur3(['inning',team,def,outs,bases,pos,pit?.id||'team',stats.updated].join('|'))();
+  const seed=xmur3(['inning',team,def,outs,bases,balls,strikes,pos,pit?.id||'team',stats.updated].join('|'))();
   const rng=mulberry32(seed); let any=0,total=0,N=3500;
-  for(let i=0;i<N;i++){const r=simulateHalf(team,def,outs,bases,pos,pit,rng,null).runs;total+=r;if(r>0)any++}
+  for(let i=0;i<N;i++){const r=simulateHalf(team,def,outs,bases,pos,pit,rng,null,{balls,strikes}).runs;total+=r;if(r>0)any++}
   return {prob:any/N*100,exp:total/N};
 }
 
@@ -529,7 +566,7 @@ function initialFutureMultiplier(team,defTeam){
 }
 function initialInningMetrics(){
   const ha=$('homeAway').value,team=battingTeam(ha,half),def=fieldingTeam(ha,half);
-  const m=initialCurrentMultiplier(team,def),baseP=RP[bases][outs]/100;
+  const m=initialCurrentMultiplier(team,def)*countHalfFactor(),baseP=RP[bases][outs]/100;
   return {prob:(1-Math.pow(1-baseP,m))*100,exp:RE[bases][outs]*m,mult:m};
 }
 function initialEventProbs(team,batter,pitcher,defTeam){
@@ -556,38 +593,122 @@ function initialEventProbs(team,batter,pitcher,defTeam){
   vals.dpCond=.10;
   return vals;
 }
-function currentMatchupPrediction(){
+const COUNT_PITCH={ball:.36,strike:.25,foul:.19,inPlay:.197,hbp:.003};
+const COUNT_MIX_CACHE={};
+function countOutcomeMix(ballCount,strikeCount){
+  const b=clamp(Math.round(ballCount),0,3),s=clamp(Math.round(strikeCount),0,2),key=`${b}-${s}`;
+  if(COUNT_MIX_CACHE[key]) return COUNT_MIX_CACHE[key];
+  const out={BB:0,K:0,BIP:COUNT_PITCH.inPlay,HBP:COUNT_PITCH.hbp};
+  const add=(next,weight)=>{for(const k of Object.keys(out))out[k]+=weight*next[k]};
+  if(b===3) out.BB+=COUNT_PITCH.ball; else add(countOutcomeMix(b+1,s),COUNT_PITCH.ball);
+  if(s===2) out.K+=COUNT_PITCH.strike; else add(countOutcomeMix(b,s+1),COUNT_PITCH.strike);
+  if(s<2) add(countOutcomeMix(b,s+1),COUNT_PITCH.foul);
+  const total=Object.values(out).reduce((a,v)=>a+v,0)||1;
+  for(const k in out)out[k]/=total;
+  COUNT_MIX_CACHE[key]=out;
+  return out;
+}
+function adjustForCount(probs,ballCount=balls,strikeCount=strikes){
+  const b=clamp(Number(ballCount)||0,0,3),s=clamp(Number(strikeCount)||0,0,2);
+  if(b===0&&s===0)return {...probs};
+  const current=countOutcomeMix(b,s),base=countOutcomeMix(0,0),quality=Math.exp(.11*b-.12*s),out={};
+  for(const k of ['1B','2B','3B','HR','BB','HBP','K','OUT']){
+    let factor;
+    if(k==='BB'||k==='K'||k==='HBP') factor=current[k]/Math.max(1e-6,base[k]);
+    else factor=current.BIP/Math.max(1e-6,base.BIP);
+    if(k==='1B'||k==='2B'||k==='3B')factor*=quality;
+    if(k==='HR')factor*=quality*quality;
+    if(k==='OUT')factor/=Math.sqrt(quality);
+    out[k]=Math.max(0,(probs[k]||0)*factor);
+  }
+  const total=Object.values(out).reduce((a,v)=>a+v,0)||1;
+  for(const k in out)out[k]/=total;
+  out.dpCond=probs.dpCond;
+  return out;
+}
+function offensiveIndex(p){
+  return (p['1B']||0)*.48+(p['2B']||0)*.78+(p['3B']||0)*1.05+(p.HR||0)*1.40+((p.BB||0)+(p.HBP||0))*.35+(p.OUT||0)*.08+(p.K||0)*.05;
+}
+function countRunFactor(){
+  const m=baseMatchupPrediction(),adjusted=adjustForCount(m.probs);
+  return clamp(offensiveIndex(adjusted)/Math.max(.01,offensiveIndex(m.probs)),.55,1.55);
+}
+function countHalfFactor(){return 1+(countRunFactor()-1)*.42}
+function baseMatchupPrediction(){
   const ha=$('homeAway').value,team=battingTeam(ha,half),def=fieldingTeam(ha,half);
   const batter=currentBatterFor(team), pitcher=currentPitcherFor(def);
   const probs=model?eventProbs(batter,pitcher,def):initialEventProbs(team,batter,pitcher,def);
   return {team,def,batter,pitcher,probs};
 }
+function currentMatchupPrediction(){
+  const m=baseMatchupPrediction();
+  return {...m,probs:adjustForCount(m.probs)};
+}
 function pctText(v){return `${(v*100).toFixed(1)}%`}
 function setProbBox(id,value){$(id).textContent=pctText(value);$('bar'+id.replace('prob','')).style.width=clamp(value*100,0,100)+'%'}
+function predictionRows(p){
+  return [
+    ['凡退',(p.OUT||0)],['三振',(p.K||0)],['四死球',(p.BB||0)+(p.HBP||0)],['単打',(p['1B']||0)],
+    ['二塁打',(p['2B']||0)],['三塁打',(p['3B']||0)],['本塁打',(p.HR||0)]
+  ];
+}
 function updatePrediction(){
   try{
     const m=currentMatchupPrediction(), ids=lineupIds(m.team), batterName=displayLineupName(m.team,ids[currentPos(m.team)%9]);
     const pitcherName=m.pitcher?displayName(m.pitcher):`${TEAM_NAME[m.def]} 投手平均`;
     const p=m.probs, outTotal=(p.OUT||0)+(p.K||0), bbHbp=(p.BB||0)+(p.HBP||0);
-    $('predictionTitle').textContent=`${batterName} vs ${pitcherName}`;
+    $('predictionTitle').textContent=`${batterName} vs ${pitcherName}｜B${balls}-S${strikes}`;
     setProbBox('probOut',outTotal);setProbBox('prob1B',p['1B']||0);setProbBox('prob2B',p['2B']||0);setProbBox('prob3B',p['3B']||0);setProbBox('probHR',p.HR||0);setProbBox('probBB',bbHbp);setProbBox('probK',p.K||0);
-    $('predictionNote').textContent=model?'読み込んだ2026打撃・投手CSVから推定。アウト合計には三振を含みます。':'内蔵した2026選手係数からの近似。アウト合計には三振を含みます。';
+    const source=model?'読み込んだ2026打撃・投手CSVから推定。':'内蔵した2026選手係数からの近似。';
+    $('predictionNote').textContent=`${source} B${balls}-S${strikes}の試用補正を現在の打席だけに反映。アウト合計には三振を含みます。`;
+    lastPrediction={title:`${batterName} vs ${pitcherName}`,probs:p,rows:predictionRows(p)};
   }catch(e){
     $('predictionTitle').textContent='--';
     for(const id of ['probOut','prob1B','prob2B','prob3B','probHR','probBB','probK']) setProbBox(id,0);
     $('predictionNote').textContent='予測を計算できませんでした。';
+    lastPrediction=null;
   }
+}
+function updateProbabilityDock(prob,exp,win){
+  $('dockRunProb').textContent=`${prob.toFixed(1)}%`;
+  $('dockRunExp').textContent=`${exp.toFixed(2)}`;
+  $('dockWin').textContent=`${win.w.toFixed(1)}%`;
+  const top=lastPrediction?.rows?.slice().sort((a,b)=>b[1]-a[1])[0];
+  $('dockPA').textContent=top?`${top[0]} ${pctText(top[1])}`:'--';
+  lastSummary={prob,exp,win,top};
+}
+function openProbabilityDetail(kind){
+  if(!lastSummary)return;
+  const countText=`現在 B${balls}-S${strikes}`;
+  $('dialogBody').innerHTML='';
+  if(kind==='run'){
+    $('dialogLabel').textContent='この回に1点以上入る確率';$('dialogValue').textContent=`${lastSummary.prob.toFixed(1)}%`;
+    $('dialogBody').textContent=`${countText}。現在のアウト・走者・打者・投手を反映しています。`;
+  }else if(kind==='exp'){
+    $('dialogLabel').textContent='この回の得点期待値';$('dialogValue').textContent=`${lastSummary.exp.toFixed(2)} 点`;
+    $('dialogBody').textContent=`${countText}から、この半回が終わるまでの平均得点です。`;
+  }else if(kind==='win'){
+    $('dialogLabel').textContent='阪神の勝利確率';$('dialogValue').textContent=`${lastSummary.win.w.toFixed(1)}%`;
+    $('dialogBody').textContent=`勝ち ${lastSummary.win.w.toFixed(1)}%・引分 ${lastSummary.win.d.toFixed(1)}%・負け ${lastSummary.win.l.toFixed(1)}%。${countText}を現在の打席だけに反映しています。`;
+  }else{
+    $('dialogLabel').textContent=lastPrediction?.title||'次打席予測';$('dialogValue').textContent=lastSummary.top?`${lastSummary.top[0]} ${pctText(lastSummary.top[1])}`:'--';
+    const grid=document.createElement('div');grid.className='dialogBreakdown';
+    for(const [label,value] of lastPrediction?.rows||[]){const item=document.createElement('div'),name=document.createElement('span'),pct=document.createElement('b');name.textContent=label;pct.textContent=pctText(value);item.append(name,pct);grid.appendChild(item)}
+    $('dialogBody').textContent=countText;$('dialogBody').appendChild(grid);
+  }
+  const dialog=$('probDialog');if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
 }
 function initialWin(){
   const ha=$('homeAway').value,opp=$('opponent').value,inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
-  const state=[inn0,half,outs,bases,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v05'].join('|');
+  const firstCountFactor=countHalfFactor();
+  const state=[inn0,half,outs,bases,balls,strikes,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v06'].join('|');
   const rng=mulberry32(xmur3(state)());let w=0,d=0,l=0,N=5500;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
     while(!done){
       const bat=battingTeam(ha,h),def=bat===TEAM_T?opp:TEAM_T;
-      const mult=first?initialCurrentMultiplier(bat,def):initialFutureMultiplier(bat,def);
+      const mult=first?initialCurrentMultiplier(bat,def)*firstCountFactor:initialFutureMultiplier(bat,def);
       const lambda=clamp((first?RE[bases][outs]:RE[0][0])*mult,.015,2.6);
       const runs=poisson(lambda,rng);
       if(bat===TEAM_T)t+=runs;else o+=runs;
@@ -606,7 +727,7 @@ function simulateWin(){
   if(!model) return initialWin();
   const ha=$('homeAway').value, opp=$('opponent').value, inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
-  const state=[inn0,half,outs,bases,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated].join('|');
+  const state=[inn0,half,outs,bases,balls,strikes,hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated].join('|');
   const rng=mulberry32(xmur3(state)()); let w=0,d=0,l=0,N=4500;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
@@ -622,7 +743,7 @@ function simulateWin(){
         return homeScore>awayScore;
       }:null;
       const startOut=first?outs:0,startBases=first?bases:0;
-      const res=simulateHalf(bat,def,startOut,startBases,posMap[bat],currentPit,rng,walkoff);
+      const res=simulateHalf(bat,def,startOut,startBases,posMap[bat],currentPit,rng,walkoff,first?{balls,strikes}:null);
       posMap[bat]=res.pos; if(bat===TEAM_T)t+=res.runs; else o+=res.runs;
       const homeScore=homeIsT?t:o,awayScore=homeIsT?o:t;
       if(h==='bottom'&&inn>=9&&homeScore>awayScore){done=true;break}
@@ -637,11 +758,12 @@ function simulateWin(){
 }
 function baselineWin(){
   const inn0=Number($('inning').value),hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value)),ha=$('homeAway').value;
-  const rng=mulberry32(xmur3([inn0,half,outs,bases,hs,os,ha].join('|'))()); let w=0,d=0,l=0,N=9000;
+  const firstCountFactor=countHalfFactor();
+  const rng=mulberry32(xmur3([inn0,half,outs,bases,balls,strikes,hs,os,ha].join('|'))()); let w=0,d=0,l=0,N=9000;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
     while(!done){
-      const bat=battingTeam(ha,h),lambda=first?RE[bases][outs]:RE[0][0],runs=poisson(lambda,rng);
+      const bat=battingTeam(ha,h),lambda=(first?RE[bases][outs]*firstCountFactor:RE[0][0]),runs=poisson(lambda,rng);
       if(bat===TEAM_T)t+=runs;else o+=runs;
       const homeIsT=ha==='home',homeScore=homeIsT?t:o,awayScore=homeIsT?o:t;
       if(h==='top'&&inn>=9&&homeScore>awayScore){done=true;break}
@@ -737,6 +859,11 @@ function refreshRunnerOptions(){
   }
 }
 function syncOutUI(){document.querySelectorAll('.outBtn').forEach(x=>x.classList.toggle('active',Number(x.dataset.o)===outs))}
+function syncCountUI(){
+  document.querySelectorAll('.ballBtn').forEach(x=>x.classList.toggle('active',Number(x.dataset.count)===balls));
+  document.querySelectorAll('.strikeBtn').forEach(x=>x.classList.toggle('active',Number(x.dataset.count)===strikes));
+}
+function resetPitchCount(){balls=0;strikes=0;syncCountUI()}
 function syncBaseUI(){
   for(const [id,bit] of [['b1',1],['b2',2],['b3',4]]){
     $(id).classList.toggle('on',Boolean(bases&bit));
@@ -753,16 +880,16 @@ function setRunners(next){
   syncBaseUI();
 }
 function resetOutsAndBases(){
-  outs=0;bases=0;baseRunners={1:'',2:'',3:''};syncOutUI();syncBaseUI();
+  outs=0;bases=0;baseRunners={1:'',2:'',3:''};resetPitchCount();syncOutUI();syncBaseUI();
 }
 function snapshot(){
-  return {half,outs,bases,baseRunners:{...baseRunners},inning:$('inning').value,tigersScore:$('tigersScore').value,oppScore:$('oppScore').value,tPos:$('tigersBatterPos').value,oPos:$('oppBatterPos').value};
+  return {half,outs,balls,strikes,bases,baseRunners:{...baseRunners},inning:$('inning').value,tigersScore:$('tigersScore').value,oppScore:$('oppScore').value,tPos:$('tigersBatterPos').value,oPos:$('oppBatterPos').value};
 }
 function restoreSnapshot(s){
-  half=s.half;outs=s.outs;bases=s.bases;baseRunners={...s.baseRunners};
+  half=s.half;outs=s.outs;balls=s.balls||0;strikes=s.strikes||0;bases=s.bases;baseRunners={...s.baseRunners};
   $('inning').value=s.inning;$('tigersScore').value=s.tigersScore;$('oppScore').value=s.oppScore;$('tigersBatterPos').value=s.tPos;$('oppBatterPos').value=s.oPos;
   $('topBtn').classList.toggle('active',half==='top');$('botBtn').classList.toggle('active',half==='bottom');
-  refreshRunnerOptions();syncOutUI();syncBaseUI();refreshBatterPosLabels();scheduleUpdate();
+  refreshRunnerOptions();syncOutUI();syncCountUI();syncBaseUI();refreshBatterPosLabels();scheduleUpdate();
 }
 function pushHistory(){history.push(snapshot());if(history.length>40)history.shift();$('undoBtn').disabled=false}
 function undoLast(){const s=history.pop();if(!s)return;restoreSnapshot(s);$('undoBtn').disabled=!history.length}
@@ -808,7 +935,7 @@ function applyPlateResult(play){
     next[1]=batter;
   }
   addRuns(team,scored);setRunners(next);advanceBatter(team);
-  if(outs>=3) nextHalf(); else {syncOutUI();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()}
+  if(outs>=3) nextHalf(); else {resetPitchCount();syncOutUI();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()}
 }
 function updateStatus(){
   if(model&&stats?.bat?.length&&stats?.pit?.length){
@@ -833,7 +960,7 @@ async function importPit(file){
 }
 function exportData(){
   if(!model){toast('初期選手データは最初から内蔵済みです。共有書き出しはCSV更新後に使えます');return}
-  const blob=new Blob([JSON.stringify({version:5,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:6,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importJson(file){
@@ -878,19 +1005,22 @@ function update(){
   $('winBig').innerHTML=`${p.w.toFixed(1)}<span class="unit">%</span>`;
   $('wText').textContent=`${p.w.toFixed(1)}%`;$('dText').textContent=`${p.d.toFixed(1)}%`;$('lText').textContent=`${p.l.toFixed(1)}%`;
   $('wp').style.width=p.w+'%';$('dp').style.width=p.d+'%';$('lp').style.width=p.l+'%';
+  updateProbabilityDock(Number.isFinite(prob)?prob:RP[bases][outs],Number.isFinite(exp)?exp:RE[bases][outs],p);
   $('winModelLabel').textContent=model?'12球団・詳細選手 4,500試合シミュレーション':'12球団・初期選手 5,500試合シミュレーション';
   const runnerRows=[];for(const [bit,key,label] of [[1,1,'一塁'],[2,2,'二塁'],[4,3,'三塁']]) if(bases&bit) runnerRows.push(`${label}：${runnerLabel(bat,baseRunners[key])||'未設定'}`);
-  $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・${runnerRows.length?runnerRows.join(' / '):'走者なし'}`;
+  $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・B${balls}-S${strikes}・${runnerRows.length?runnerRows.join(' / '):'走者なし'}`;
 }
 setupStatic();
 $('topBtn').onclick=()=>{pushHistory();setHalf('top',true)};$('botBtn').onclick=()=>{pushHistory();setHalf('bottom',true)};
 $('nextHalf').onclick=()=>{pushHistory();nextHalf()};
 document.querySelectorAll('.outBtn').forEach(b=>b.onclick=()=>{
   const next=Number(b.dataset.o), team=battingTeam($('homeAway').value,half);
-  if(next>outs){pushHistory();outs=next;advanceBatter(team)}
+  if(next>outs){pushHistory();outs=next;advanceBatter(team);resetPitchCount()}
   else outs=next;
   syncOutUI();refreshBatterPosLabels();scheduleUpdate();
 });
+document.querySelectorAll('.ballBtn').forEach(b=>b.onclick=()=>{balls=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
+document.querySelectorAll('.strikeBtn').forEach(b=>b.onclick=()=>{strikes=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
 [['b1',1],['b2',2],['b3',4]].forEach(([id,bit])=>$(id).onclick=()=>{
   bases^=bit;if(bases&bit)baseRunners[bit]=baseRunners[bit]||AVG_LINEUP_ID;else baseRunners[bit]='';
   syncBaseUI();scheduleUpdate();
@@ -903,7 +1033,8 @@ for(const base of [1,2,3]) $('runner'+base).addEventListener('change',e=>{
 document.querySelectorAll('.playBtn').forEach(b=>b.onclick=()=>applyPlateResult(b.dataset.play));
 $('undoBtn').onclick=undoLast;
 $('homeAway').addEventListener('change',()=>{pushHistory();resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
-['tigersScore','oppScore','tigersBatterPos','oppBatterPos'].forEach(id=>{$(id).addEventListener('input',scheduleUpdate);$(id).addEventListener('change',()=>{refreshRunnerOptions();scheduleUpdate()})});
+['tigersScore','oppScore'].forEach(id=>$(id).addEventListener('input',scheduleUpdate));
+['tigersBatterPos','oppBatterPos'].forEach(id=>{$(id).addEventListener('input',scheduleUpdate);$(id).addEventListener('change',()=>{resetPitchCount();refreshRunnerOptions();scheduleUpdate()})});
 $('inning').addEventListener('change',()=>{pushHistory();resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
 $('tigersPitcher').addEventListener('change',()=>{if($('tLine8'))$('tLine8').value=PITCHER_LINEUP_ID;refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
 $('oppPitcher').addEventListener('change',()=>{refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
@@ -912,6 +1043,7 @@ $('importBatBtn').onclick=()=>$('batFile').click();$('importPitBtn').onclick=()=
 $('batFile').onchange=async e=>{try{if(e.target.files[0])await importBat(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 $('pitFile').onchange=async e=>{try{if(e.target.files[0])await importPit(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 $('jsonFile').onchange=async e=>{try{if(e.target.files[0])await importJson(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
+document.querySelectorAll('#probDock button').forEach(b=>b.onclick=()=>openProbabilityDetail(b.dataset.detail));
 loadStats();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>

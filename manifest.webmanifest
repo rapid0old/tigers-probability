@@ -6,5 +6,5 @@
   "display": "standalone",
   "background_color": "#0f0f10",
   "theme_color": "#111111",
-  "description": "2026年12球団の初期選手モデル、走者選択、打席進行、次打席予測を端末内で扱う私的利用PWA"
+  "description": "2026年12球団の初期選手モデル、走者選択、カウント補正、打席進行、常時確率表示を端末内で扱う私的利用PWA"
 }
