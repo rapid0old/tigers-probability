@@ -112,7 +112,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.8 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.8.1 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -1004,19 +1004,20 @@ function syncCountUI(){
   document.querySelectorAll('.strikeBtn').forEach(x=>x.classList.toggle('active',Number(x.dataset.count)===strikes));
 }
 function resetPitchCount(){balls=0;strikes=0;syncCountUI()}
+function baseBit(base){return 1<<(base-1)}
 function syncBaseUI(){
-  for(const [id,bit] of [['b1',1],['b2',2],['b3',4]]){
-    $(id).classList.toggle('on',Boolean(bases&bit));
-    const sel=$('runner'+bit);
+  for(const base of [1,2,3]){
+    const bit=baseBit(base),sel=$('runner'+base);
+    $('b'+base).classList.toggle('on',Boolean(bases&bit));
     if(sel){
-      if(!(bases&bit)) baseRunners[bit]='';
-      sel.value=baseRunners[bit]||'';
+      if(!(bases&bit)) baseRunners[base]='';
+      sel.value=baseRunners[base]||'';
     }
   }
 }
 function setRunners(next){
   baseRunners={1:next[1]||'',2:next[2]||'',3:next[3]||''};
-  bases=(baseRunners[1]?1:0)|(baseRunners[2]?2:0)|(baseRunners[3]?4:0);
+  bases=[1,2,3].reduce((state,base)=>state|(baseRunners[base]?baseBit(base):0),0);
   syncBaseUI();
 }
 function resetOutsAndBases(){
@@ -1043,7 +1044,7 @@ function applyPinchHitter(){
   resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();refreshSubstitutionUI();setSubstitutionStatus(`${TEAM_NAME[team]} ${pos+1}番に代打 ${displayName(p)}`);scheduleUpdate();
 }
 function applyPinchRunner(){
-  const team=battingTeam($('homeAway').value,half),id=$('pinchRunner').value,p=getPlayerById(team,id,'bat'),base=Number($('pinchRunnerBase').value),bit=base===3?4:base;
+  const team=battingTeam($('homeAway').value,half),id=$('pinchRunner').value,p=getPlayerById(team,id,'bat'),base=Number($('pinchRunnerBase').value),bit=baseBit(base);
   if(!p){toast('代走を選択してください');return}if(!(bases&bit)){toast(`${base}塁に走者がいません`);return}
   pushHistory();baseRunners[base]=id;syncBaseUI();refreshSubstitutionUI();setSubstitutionStatus(`${TEAM_NAME[team]} ${base}塁に代走 ${displayName(p)}`);scheduleUpdate();
 }
@@ -1184,13 +1185,13 @@ document.querySelectorAll('.outBtn').forEach(b=>b.onclick=()=>{
 });
 document.querySelectorAll('.ballBtn').forEach(b=>b.onclick=()=>{balls=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
 document.querySelectorAll('.strikeBtn').forEach(b=>b.onclick=()=>{strikes=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
-[['b1',1],['b2',2],['b3',4]].forEach(([id,bit])=>$(id).onclick=()=>{
-  bases^=bit;if(bases&bit)baseRunners[bit]=baseRunners[bit]||AVG_LINEUP_ID;else baseRunners[bit]='';
+[1,2,3].forEach(base=>$('b'+base).onclick=()=>{
+  const bit=baseBit(base);bases^=bit;if(bases&bit)baseRunners[base]=baseRunners[base]||AVG_LINEUP_ID;else baseRunners[base]='';
   syncBaseUI();scheduleUpdate();
 });
 for(const base of [1,2,3]) $('runner'+base).addEventListener('change',e=>{
-  baseRunners[base]=e.target.value;
-  if(e.target.value) bases|=base; else bases&=~base;
+  const bit=baseBit(base);baseRunners[base]=e.target.value;
+  if(e.target.value) bases|=bit; else bases&=~bit;
   syncBaseUI();scheduleUpdate();
 });
 document.querySelectorAll('.playBtn').forEach(b=>b.onclick=()=>applyPlateResult(b.dataset.play));
