@@ -1,4 +1,4 @@
-const CACHE='tigers-probability-v0.4';
+const CACHE='tigers-probability-v0.5-trial';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg'];
 
 self.addEventListener('install',event=>{
