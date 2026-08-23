@@ -23,7 +23,7 @@ h1{font-size:20px;margin:0;line-height:1.2}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-select,input[type=number]{width:100%;font-size:16px;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none}
+select,input[type=number],input[type=date]{width:100%;font-size:16px;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;outline:none;color-scheme:dark}
 button,.buttonLink{appearance:none;border:none;border-radius:12px;padding:12px 8px;font-size:14px;font-weight:750;background:var(--card2);color:var(--text);border:1px solid var(--line);touch-action:manipulation;text-align:center;text-decoration:none;display:block}
 button.active{background:var(--accent);color:#111;border-color:var(--accent)}
 button.primary{background:var(--accent);color:#111;border-color:var(--accent)}
@@ -76,6 +76,15 @@ summary{cursor:pointer;font-weight:800;font-size:14px}
 .runnerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .playGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .playGrid button{min-height:46px}
+.learningPanel{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.learningPanel[open]>summary{margin-bottom:12px}
+.learningStatus{padding:11px 12px;border:1px solid var(--line);background:#111114;font-size:12px;line-height:1.6;margin:10px 0}
+.learningStatus strong{color:var(--accent)}
+.toggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.toggleRow:last-child{border-bottom:0}
+.toggleRow label{margin:0;color:var(--text);font-size:13px;line-height:1.4}
+.toggleRow input{width:22px;height:22px;accent-color:var(--accent);flex:0 0 auto}
+.danger{border-color:#713d3d;background:#352020;color:#ffd1d1}
 .countGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .countSegment{display:grid;gap:6px}
 .countSegment.balls{grid-template-columns:repeat(4,1fr)}
@@ -112,7 +121,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.8.1 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.9 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -172,6 +181,24 @@ a{color:#b7cfff}
     <button class="playBtn" data-play="HR">本塁打</button>
     <button id="undoBtn" class="secondary" disabled>戻す</button>
   </div>
+  <details class="learningPanel" open>
+    <summary>観戦データ学習</summary>
+    <div class="row">
+      <div><label for="learningGameDate">試合日</label><input id="learningGameDate" type="date"></div>
+      <div>
+        <div class="toggleRow"><label for="learningCapture">打席結果を記録</label><input id="learningCapture" type="checkbox" checked></div>
+        <div class="toggleRow"><label for="learningEnabled">確率へ反映</label><input id="learningEnabled" type="checkbox" checked></div>
+      </div>
+    </div>
+    <div class="learningStatus" id="learningStatus"><strong>基準スナップショットを準備中</strong></div>
+    <div class="actionGrid">
+      <button id="exportLearningBtn" class="secondary">観戦データを書き出す</button>
+      <button id="importLearningBtn" class="secondary">観戦データを読み込む</button>
+      <button id="clearLearningBtn" class="danger">学習データを破棄</button>
+    </div>
+    <input id="learningFile" type="file" accept=".json,application/json" hidden>
+    <div class="small" style="margin-top:10px">打席結果ボタンから入力した内容だけを端末内へ保存します。少ない件数では基準スナップショットを強く残し、観戦打席が増えるほど打者・投手・対戦の傾向を少しずつ確率へ加えます。送りバントは記録しますが、打撃結果の確率学習からは除外します。</div>
+  </details>
 </section>
 
 <section class="card" id="playerCard">
@@ -255,7 +282,7 @@ a{color:#b7cfff}
   <div class="note">
     <b>選手モデルのロジック</b><br>
     初期状態では、2026年の12球団の主要選手に加え、阪神の控え野手・救援投手を含む<b>打撃力係数（wOBAベース）</b>と<b>投手係数（FIPベース）</b>を内蔵しています。打席数・投球回が少ない選手ほどリーグ平均へ縮約して、小標本の暴れを抑えています。現在打者から近い3人、現在投手、走者の走力を使って、24状況の得点確率・得点期待値を補正し、残り試合をシミュレーションします。<br><br>
-    次打席予測は、詳細CSVがある場合は打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。CSVがない場合は、内蔵した打撃力・投手係数から近似分布を表示します。現在のボール・ストライクは、四球・三振・インプレーの到達確率と打者有利/投手有利の差を使う試用補正として、現在の打席だけに反映します。代打・代走・投手交代は手動で現在状態へ反映します。守備・球場・左右別・対戦相性・交代選手の自動予測はまだ未反映です。
+    次打席予測は、詳細CSVがある場合は打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。CSVがない場合は、内蔵した打撃力・投手係数から近似分布を表示します。観戦中に入力した打席結果は端末内だけに保存し、基準値を強く残したまま打者・投手・対戦別の追加サンプルとして反映します。現在のボール・ストライクは、四球・三振・インプレーの到達確率と打者有利/投手有利の差を使う試用補正として、現在の打席だけに反映します。代打・代走・投手交代は手動で現在状態へ反映します。守備・球場・左右別・対戦相性・交代選手の自動予測はまだ未反映です。
   </div>
 </section>
 
@@ -296,6 +323,10 @@ const TEAM_NAME = Object.fromEntries(TEAMS);
 const AVG_LINEUP_ID='__avg__';
 const PITCHER_LINEUP_ID='__pitcher__';
 const OPP_LINEUP_STORAGE='tigersOpponentLineupsV1';
+const BUILTIN_SNAPSHOT_DATE='2026-08-22';
+const LEARNING_STORAGE='tigersObservedLearningV1';
+const LEARNING_EVENTS=['1B','2B','3B','HR','BB','K','OUT'];
+const LEARNING_PRIOR_PA=48;
 const DISPLAY_NAME_OVERRIDES={"Akira Yagi":"八木彬","Akito Takabe":"髙部瑛斗","Alexander Canario":"カナリオ","Allan Winans":"ワイナンス","Anderson Espinoza":"エスピノーザ","Andre Jackson":"ジャクソン","Andres Machado":"マチャド","Anko Rin":"林安可","Aren Kuri":"九里亜蓮","Asahi Miyashita":"宮下朝陽","Atsuki Tomosugi":"友杉篤輝","Atsushi Endo":"遠藤淳志","Atsushi Katsumata":"勝又温史","Bob Seymour":"シーモア","Bobby Dalbec":"ダルベック","Carson Mccusker":"マッカスカー","Carter Stewart Jr.":"スチュワート・ジュニア","Chihiro Sumida":"隅田知一郎","Chusei Mannami":"万波中正","Cooper Hummel":"ヒュンメル","Daiki Tajima":"田嶋大樹","Daisuke Moriura":"森浦大輔","Daisuke Nakashima":"中島大輔","Domingo Santana":"サンタナ","Eito Tanaka":"田中瑛斗","Elehuris Montero":"モンテロ","Forrest Whitley":"ウィットリー","Franmil Reyes":"レイエス","Freddy Tarnok":"ターノック","Fumiya Kurokawa":"黒川史陽","Go Matsumoto":"松本剛","Gregory Polanco":"ポランコ","Haru Matsumoto":"松本晴","Haruki Hosono":"細野晴希","Haruto Inoe":"井上温大","Haruto Watanabe":"渡部遼人","Haruya Tanaka":"田中晴也","Hayato Sakamoto":"坂本勇人","Hideaki Wakui":"涌井秀章","Hideki Nagaoka":"長岡秀樹","Hideto Asamura":"浅村栄斗","Hikaru Kawase":"川瀬晃","Hikaru Ota":"太田光","Hiroki Fukunaga":"福永裕基","Hiroki Tokoda":"床田寛樹","Hiromi Ito":"伊藤大海","Hiroshi Kaino":"甲斐野央","Hiroto Kobukata":"小深田大翔","Hiroto Takahashi":"髙橋宏斗","Hirotoshi Takanashi":"高梨裕稔","Hisanori Yasuda":"安田尚憲","Hotaka Yamakawa":"山川穂高","Isami Nomura":"野村勇","Itsuki Murabayashi":"村林一輝","Jason Vosler":"ボスラー","Jerar Encarnacion":"エンカーナシオン","Jose Osuna":"オスナ","Jose Urena":"ウレーニャ","Junichiro Kishi":"岸潤一郎","Kaima Taira":"平良海馬","Kaito Kozono":"小園海斗","Kaito Mori":"森遼大朗","Kaito Muramatsu":"村松開人","Katsuki Azuma":"東克樹","Kazuki Sugiyama":"杉山一樹","Kazunari Ishii":"石井一成","Kazuya Maruyama":"丸山和郁","Kazuya Ojima":"小島和哉","Kazuyuki Takemaru":"竹丸和幸","Keiji Takahashi":"高橋奎二","Keita Nakagawa":"中川圭太","Keita Sano":"佐野恵太","Kengo Matsumoto":"松本健吾","Kengo Yoshida":"吉田賢吾","Kensuke Kondo":"近藤健介","Kenta Imamiya":"今宮健太","Kenta Maeda":"前田健太","Kentaro Shinogi":"篠木健太郎","Kentaro Taira":"平良拳太郎","Kenya Suzuki":"鈴木健矢","Kenya Wakatsuki":"若月健矢","Kohei Arihara":"有原航平","Kojiro Yoshimura":"吉村貢司郎","Koki Kitayama":"北山亘基","Koki Yamaguchi":"山口航輝","Kona Takahashi":"髙橋光成","Kosei Shoji":"荘司康誠","Koshiro Hiroike":"廣池康志郎","Kosuke Ukai":"鵜飼航丞","Kota Tatsu":"達孝太","Kota Yazawa":"矢澤宏太","Kotaro Kiyomiya":"清宮幸太郎","Kotaro Kurebayashi":"紅林弘太郎","Kyle Muller":"マラー","Kyota Fujiwara":"藤原恭大","Kyuto Ueda":"上田希由翔","Manaya Nishikawa":"西川愛也","Masahiro Tanaka":"田中将大","Masaki Mimori":"三森大貴","Masaru Fujii":"藤井聖","Masato Morishita":"森下暢仁","Masayuki Kuwahara":"桑原将志","Miguel Sano":"サノー","Mikiya Tanaka":"田中幹也","Minoru Omori":"大盛穂","Misho Nishikawa":"西川史礁","Naoki Sato":"佐藤直樹","Naoki Yoshikawa":"吉川尚輝","Naoyuki Uwasawa":"上沢直之","Naru Katsuda":"勝田成","Naruki Teranishi":"寺西成騎","Natsuki Takeuchi":"武内夏暉","Natsuo Takizawa":"滝澤夏央","Neftali Soto":"ソト","Norihiko Nabara":"名原典彦","Raidel Martinez":"マルティネス","Ren Fukushima":"福島蓮","Ren Hirakawa":"平川蓮","Ren Mukunoki":"椋木蓮","Riku Masuda":"増田陸","Rikuto Yokoyama":"横山陸人","Roberto Osuna":"オスナ","Rodolfo Castro":"カストロ","Ryo Ota":"太田椋","Ryoji Kuribayashi":"栗林良吏","Ryoma Nishikawa":"西川龍馬","Ryoma Yamanaka":"山中稜真","Ryosuke Kikuchi":"菊池涼介","Ryosuke Otsu":"大津亮介","Ryosuke Tatsumi":"辰己涼介","Ryota Takinaka":"瀧中瞭太","Ryoto Kita":"来田涼斗","Ryoya Kurihara":"栗原陵矢","Ryuhei Sotani":"曽谷龍平","Ryui Ito":"伊藤琉偉","Ryuki Watarai":"度会隆輝","Ryusei Ogawa":"小川龍成","Ryusei Takeoka":"武岡龍世","Ryusei Terachi":"寺地隆成","Ryuya Taira":"平良竜哉","Sam Long":"ロング","Sandro Fabian":"ファビアン","Sean Hjelle":"ジェリー","Sean Reynolds":"レイノルズ","Seiya Hosokawa":"細川成也","Seiya Watanabe":"渡部聖弥","Shinya Hasegawa":"長谷川信哉","Shinya Sugai":"菅井信也","Shion Matsuo":"松尾汐恩","Shogo Akiyama":"秋山翔吾","Shogo Sakakura":"坂倉将吾","Shogo Tamamura":"玉村昇悟","Shohei Mori":"森翔平","Shosei Togo":"戸郷翔征","Shu Masuda":"増田珠","Shugo Maki":"牧秀悟","Shun Mizutani":"水谷瞬","Shun Okamoto":"岡本駿","Shunsuke Sasaki":"佐々木俊輔","Shunsuke Urata":"浦田俊輔","Shuto Ogata":"尾形崇斗","Soichiro Yamazaki":"山﨑颯一郎","Soma Uchiyama":"内山壮真","Sosuke Genda":"源田壮亮","Tai Sasaki":"佐々木泰","Taichi Taka":"髙太一","Taichi Yamano":"山野太一","Taiga Hirasawa":"平沢大河","Taiga Kamichatani":"上茶谷大河","Taiga Kojima":"小島大河","Taiki Mochimaru":"持丸泰輝","Taiki Narama":"奈良間大己","Taisei Makihara":"牧原大成","Taito Takashima":"髙島泰都","Takahiro Norimoto":"則本昂大","Takahisa Hayakawa":"早川隆久","Takashi Umino":"海野隆司","Takaya Ishikawa":"石川昂弥","Takayuki Kato":"加藤貴之","Takayuki Kishi":"岸孝之","Takuma Hayashi":"林琢真","Takumi Oshiro":"大城卓三","Tatsuki Koja":"古謝樹","Tatsuki Mizuno":"水野達稀","Tatsuo Ebina":"蝦名達夫","Tatsuru Yanagimachi":"柳町達","Taylor Hearn":"ハーン","Tokito Kawamura":"河村説人","Tomohisa Ozeki":"大関友久","Tomoya Masaki":"正木智也","Tomoya Mori":"森友哉","Tomoya Noguchi":"野口智哉","Toshiki Abe":"阿部寿樹","Toshiro Miyazaki":"宮﨑敏郎","Toshiya Sato":"佐藤都志也","Trey Cabbage":"キャベッジ","Tyler Nevin":"ネビン","Ukyo Shuto":"周東佑京","Yasuhiro Ogawa":"小川泰弘","Yasunobu Okugawa":"奥川恭伸","Yorinosuke Sakurai":"櫻井頼之介","Yoshiaki Watanabe":"渡邊佳明","Yoshihiro Akahane":"赤羽由紘","Yoshitomo Tsutsugo":"筒香嘉智","Yota Kyoda":"京田陽太","Yua Tamiya":"田宮裕涼","Yudai Koga":"古賀優大","Yudai Ono":"大野雄大","Yudai Shoji":"庄子雄大","Yudai Yamamoto":"山本祐大","Yugo Maeda":"前田悠伍","Yuji Akahoshi":"赤星優志","Yuki Matsumoto":"松本裕樹","Yuki Nomura":"野村佑希","Yuki Okabayashi":"岡林勇希","Yuki Yanagita":"柳田悠岐","Yukihiro Iwata":"岩田幸宏","Yukinori Kishida":"岸田行倫","Yuma Mune":"宗佑磨","Yumeto Kanemaru":"金丸夢斗","Yuta Ishii":"石伊雄太","Yuta Izuguchi":"泉口友汰","Yutaro Ishida":"石田裕太郎","Yutaro Itayama":"板山祐太郎","Yutaro Watanabe":"渡邉勇太朗","Yuto Koga":"古賀悠斗","Yuya Gunji":"郡司裕也","Yuya Ogo":"小郷裕哉","Yuya Yanagi":"柳裕也"};
 const SORT_KEY_OVERRIDES={"近本光司":"chikamoto koji","中野拓夢":"nakano takumu","森下翔太":"morishita shota","佐藤輝明":"sato teruaki","大山悠輔":"ohyama yusuke","前川右京":"maegawa ukyo","坂本誠志郎":"sakamoto seishiro","元山飛優":"motoyama hiyu","髙寺望夢":"takatera nozomu","木浪聖也":"kinami seiya","小幡竜平":"obata ryuhei","熊谷敬宥":"kumagai takahiro","伏見寅威":"fushimi torai","福島圭音":"fukushima keito","立石正広":"tateishi masahiro","村上頌樹":"murakami shoki","才木浩人":"saiki hiroto","髙橋遥人":"takahashi haruto","大竹耕太郎":"ohtake kotaro","R.ドリス":"dolis rafael","工藤泰成":"kudo taisei"};
 Object.assign(SORT_KEY_OVERRIDES,{
@@ -357,12 +388,122 @@ function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
 const jaCollator=new Intl.Collator('ja-JP',{numeric:true,sensitivity:'base'});
 
 const $ = id => document.getElementById(id);
-let half='top', outs=0, balls=0, strikes=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[], lastPrediction=null, lastSummary=null, savedOpponentLineups={};
+let half='top', outs=0, balls=0, strikes=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[], lastPrediction=null, lastSummary=null, savedOpponentLineups={}, observedLearning=null, learningIndex=null;
 
 function toast(msg){const e=$('toast');e.textContent=msg;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
 function num(x){const v=Number(String(x??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
 function safeDiv(a,b){return b>0?a/b:0}
 function compactName(x){return String(x||'').replace(/[\s　]/g,'')}
+function localDateValue(date=new Date()){
+  const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);return local.toISOString().slice(0,10);
+}
+function currentBaselineKey(){return stats?.updated?`detail-${stats.updated}`:`builtin-${BUILTIN_SNAPSHOT_DATE}`}
+function currentBaselineLabel(){return stats?.updated?`${new Date(stats.updated).toLocaleDateString('ja-JP')}読込版`:`${BUILTIN_SNAPSHOT_DATE.replaceAll('-','/')}内蔵版`}
+function blankObservedLearning(){return {version:1,baselineKey:currentBaselineKey(),startedAt:Date.now(),enabled:true,capture:true,entries:[]}}
+function learningPlayerKey(p){
+  if(!p||p.id===AVG_LINEUP_ID||p.id===PITCHER_LINEUP_ID||p.pitcherBatter)return '';
+  return `${p.team||''}|${compactName(displayName(p))}`;
+}
+function learningOutcome(play){return LEARNING_EVENTS.includes(play)?play:null}
+function addLearningBucket(map,key,outcome){
+  if(!key||!outcome)return;
+  if(!map.has(key))map.set(key,{n:0,counts:Object.fromEntries(LEARNING_EVENTS.map(k=>[k,0]))});
+  const bucket=map.get(key);bucket.n++;bucket.counts[outcome]++;
+}
+function rebuildLearningIndex(){
+  const byBatter=new Map(),byPitcher=new Map(),byMatch=new Map();let eligible=0;
+  for(const entry of observedLearning?.entries||[]){
+    if(!learningOutcome(entry.outcome)||(!entry.batterKey&&!entry.pitcherKey))continue;
+    eligible++;
+    addLearningBucket(byBatter,entry.batterKey,entry.outcome);
+    addLearningBucket(byPitcher,entry.pitcherKey,entry.outcome);
+    if(entry.batterKey&&entry.pitcherKey)addLearningBucket(byMatch,`${entry.batterKey}>${entry.pitcherKey}`,entry.outcome);
+  }
+  learningIndex={byBatter,byPitcher,byMatch,eligible};
+}
+function saveObservedLearning(){
+  try{localStorage.setItem(LEARNING_STORAGE,JSON.stringify(observedLearning))}catch(e){toast('観戦データを保存できませんでした')}
+  rebuildLearningIndex();updateLearningUI();
+}
+function ensureLearningBaseline(notify=false){
+  if(!observedLearning)observedLearning=blankObservedLearning();
+  if(observedLearning.baselineKey===currentBaselineKey())return false;
+  const discarded=observedLearning.entries?.length||0;
+  observedLearning=blankObservedLearning();saveObservedLearning();
+  if(notify&&discarded)toast(`新しい基準データへ切替：旧学習 ${discarded}打席を破棄しました`);
+  return true;
+}
+function loadObservedLearning(){
+  try{
+    const raw=localStorage.getItem(LEARNING_STORAGE),x=raw?JSON.parse(raw):null;
+    if(x&&x.version===1&&Array.isArray(x.entries))observedLearning={...x,enabled:x.enabled!==false,capture:x.capture!==false,entries:x.entries.slice(-5000)};
+  }catch(e){}
+  if(!observedLearning)observedLearning=blankObservedLearning();
+  ensureLearningBaseline(false);rebuildLearningIndex();
+  if($('learningGameDate')&&!$('learningGameDate').value)$('learningGameDate').value=localDateValue();
+  updateLearningUI();
+}
+function updateLearningUI(){
+  if(!$('learningStatus')||!observedLearning)return;
+  const total=observedLearning.entries.length,eligible=learningIndex?.eligible||0,last=observedLearning.entries.at(-1),lastDate=/^\d{4}-\d{2}-\d{2}$/.test(last?.gameDate||'')?last.gameDate.replaceAll('-','/'):'';
+  $('learningCapture').checked=observedLearning.capture!==false;$('learningEnabled').checked=observedLearning.enabled!==false;
+  $('learningStatus').innerHTML=`<strong>基盤：${currentBaselineLabel()}</strong><br>観戦入力 ${total}打席 / 確率学習 ${eligible}打席${lastDate?` / 最終 ${lastDate}`:''}<br>${observedLearning.enabled?'基準を優先しながら観戦データを反映中':'観戦データの確率反映はOFF'}`;
+}
+function learningEvidence(batter,pitcher){
+  const batterKey=learningPlayerKey(batter),pitcherKey=learningPlayerKey(pitcher),counts=Object.fromEntries(LEARNING_EVENTS.map(k=>[k,0]));let n=0;
+  const add=(bucket,weight)=>{if(!bucket)return;n+=bucket.n*weight;for(const k of LEARNING_EVENTS)counts[k]+=bucket.counts[k]*weight};
+  add(learningIndex?.byBatter.get(batterKey),.35);add(learningIndex?.byPitcher.get(pitcherKey),.35);
+  if(batterKey&&pitcherKey)add(learningIndex?.byMatch.get(`${batterKey}>${pitcherKey}`),1);
+  return {n,counts};
+}
+function applyObservedLearning(probs,batter,pitcher){
+  if(!observedLearning?.enabled||!learningIndex?.eligible)return {...probs};
+  const evidence=learningEvidence(batter,pitcher);if(evidence.n<=0)return {...probs};
+  const baseWalk=(probs.BB||0)+(probs.HBP||0),grouped={
+    '1B':probs['1B']||0,'2B':probs['2B']||0,'3B':probs['3B']||0,HR:probs.HR||0,BB:baseWalk,K:probs.K||0,OUT:probs.OUT||0
+  },learned={};
+  for(const k of LEARNING_EVENTS)learned[k]=(grouped[k]*LEARNING_PRIOR_PA+evidence.counts[k])/(LEARNING_PRIOR_PA+evidence.n);
+  const walkBbShare=baseWalk>0?(probs.BB||0)/baseWalk:.9;
+  return {'1B':learned['1B'],'2B':learned['2B'],'3B':learned['3B'],HR:learned.HR,BB:learned.BB*walkBbShare,HBP:learned.BB*(1-walkBbShare),K:learned.K,OUT:learned.OUT,dpCond:probs.dpCond};
+}
+function learningFingerprint(){
+  const entries=observedLearning?.entries||[],last=entries.at(-1);return `${observedLearning?.enabled!==false?'on':'off'}-${entries.length}-${last?.id||''}`;
+}
+function recordPlateObservation(play,matchup){
+  if(!observedLearning?.capture)return;
+  const batterKey=learningPlayerKey(matchup.batter),pitcherKey=learningPlayerKey(matchup.pitcher),now=Date.now();
+  observedLearning.entries.push({
+    id:`${now}-${Math.random().toString(36).slice(2,8)}`,recordedAt:now,gameDate:$('learningGameDate').value||localDateValue(),
+    team:matchup.team,defTeam:matchup.def,batterKey,pitcherKey,batterName:matchup.batter?displayName(matchup.batter):'',pitcherName:matchup.pitcher?displayName(matchup.pitcher):'',
+    balls,strikes,result:play,outcome:learningOutcome(play)
+  });
+  if(observedLearning.entries.length>5000)observedLearning.entries=observedLearning.entries.slice(-5000);
+  saveObservedLearning();
+}
+function clearObservedLearning(){
+  if(!observedLearning?.entries.length){toast('破棄する観戦データはありません');return}
+  if(!confirm(`観戦データ ${observedLearning.entries.length}打席を破棄しますか？`))return;
+  observedLearning=blankObservedLearning();saveObservedLearning();history=[];$('undoBtn').disabled=true;scheduleUpdate();toast('観戦データを破棄しました');
+}
+function exportObservedLearning(){
+  if(!observedLearning?.entries.length){toast('書き出す観戦データはありません');return}
+  const payload={...observedLearning,exportedAt:Date.now(),baselineLabel:currentBaselineLabel()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download=`tigers_observed_data_${localDateValue()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function importObservedLearning(file){
+  const x=JSON.parse(await file.text());
+  if(x?.version!==1||!Array.isArray(x.entries))throw new Error('対応する観戦データではありません');
+  if(x.baselineKey!==currentBaselineKey())throw new Error('基準スナップショットが異なるため読み込めません');
+  const validOutcomes=new Set([...LEARNING_EVENTS,null]),entries=x.entries.slice(-5000).filter(e=>e&&validOutcomes.has(e.outcome)).map(e=>({
+    id:String(e.id||`${Date.now()}-${Math.random()}`).slice(0,80),recordedAt:num(e.recordedAt)||Date.now(),gameDate:/^\d{4}-\d{2}-\d{2}$/.test(e.gameDate)?e.gameDate:localDateValue(),
+    team:String(e.team||'').slice(0,30),defTeam:String(e.defTeam||'').slice(0,30),batterKey:String(e.batterKey||'').slice(0,100),pitcherKey:String(e.pitcherKey||'').slice(0,100),
+    batterName:String(e.batterName||'').slice(0,80),pitcherName:String(e.pitcherName||'').slice(0,80),balls:clamp(num(e.balls),0,3),strikes:clamp(num(e.strikes),0,2),result:String(e.result||''),outcome:e.outcome
+  }));
+  if(!confirm(`現在の観戦データを、読み込んだ ${entries.length}打席で置き換えますか？`))return;
+  observedLearning={version:1,baselineKey:currentBaselineKey(),startedAt:num(x.startedAt)||Date.now(),enabled:x.enabled!==false,capture:x.capture!==false,entries};
+  saveObservedLearning();history=[];$('undoBtn').disabled=true;scheduleUpdate();toast(`観戦データ ${entries.length}打席を読み込みました`);
+}
 function loadSavedOpponentLineups(){
   try{const raw=localStorage.getItem(OPP_LINEUP_STORAGE);savedOpponentLineups=raw?JSON.parse(raw):{}}catch(e){savedOpponentLineups={}}
 }
@@ -643,7 +784,7 @@ function simulateHalf(team,defTeam,startOut,startBases,startPos,pitcher,rng,walk
   let guard=0,firstPlate=true;
   while(o<3 && guard++<80){
     const batter=lineupBatter(team,lu[pos%9]) || model.byBat[team]?.[0] || null;
-    const basePr=eventProbs(batter,pitcher,defTeam),pr=firstPlate&&firstCount?adjustForCount(basePr,firstCount.balls,firstCount.strikes):basePr;
+    const basePr=applyObservedLearning(eventProbs(batter,pitcher,defTeam),batter,pitcher),pr=firstPlate&&firstCount?adjustForCount(basePr,firstCount.balls,firstCount.strikes):basePr;
     const ev=pickEvent(pr,rng), res=applyEvent(ev,b,o,rng,pr.dpCond);
     b=res.b;o=res.o;runs+=res.runs;pos=(pos+1)%9;firstPlate=false;
     if(walkoffFn && res.runs>0 && walkoffFn(runs)) break;
@@ -654,7 +795,7 @@ function simulateInningMetrics(){
   if(!model) return null;
   const ha=$('homeAway').value, team=battingTeam(ha,half), def=fieldingTeam(ha,half);
   const pit=currentPitcherFor(def), pos=currentPos(team);
-  const seed=xmur3(['inning',team,def,outs,bases,balls,strikes,pos,pit?.id||'team',baseRunners[1],baseRunners[2],baseRunners[3],stats.updated].join('|'))();
+  const seed=xmur3(['inning',team,def,outs,bases,balls,strikes,pos,pit?.id||'team',baseRunners[1],baseRunners[2],baseRunners[3],stats.updated,learningFingerprint()].join('|'))();
   const rng=mulberry32(seed); let any=0,total=0,N=3500;
   for(let i=0;i<N;i++){const r=simulateHalf(team,def,outs,bases,pos,pit,rng,null,{balls,strikes}).runs;total+=r;if(r>0)any++}
   const speed=runnerSpeedFactor(team),baseProb=any/N;
@@ -683,7 +824,7 @@ function initialFutureMultiplier(team,defTeam){
 }
 function initialInningMetrics(){
   const ha=$('homeAway').value,team=battingTeam(ha,half),def=fieldingTeam(ha,half);
-  const m=initialCurrentMultiplier(team,def)*countHalfFactor()*runnerSpeedFactor(team),baseP=RP[bases][outs]/100;
+  const m=initialCurrentMultiplier(team,def)*countHalfFactor()*learningHalfFactor()*runnerSpeedFactor(team),baseP=RP[bases][outs]/100;
   return {prob:(1-Math.pow(1-baseP,m))*100,exp:RE[bases][outs]*m,mult:m};
 }
 function initialEventProbs(team,batter,pitcher,defTeam){
@@ -746,16 +887,24 @@ function adjustForCount(probs,ballCount=balls,strikeCount=strikes){
 function offensiveIndex(p){
   return (p['1B']||0)*.48+(p['2B']||0)*.78+(p['3B']||0)*1.05+(p.HR||0)*1.40+((p.BB||0)+(p.HBP||0))*.35+(p.OUT||0)*.08+(p.K||0)*.05;
 }
+function learningRunFactor(){
+  const m=rawMatchupPrediction(),learned=applyObservedLearning(m.probs,m.batter,m.pitcher);
+  return clamp(offensiveIndex(learned)/Math.max(.01,offensiveIndex(m.probs)),.72,1.35);
+}
+function learningHalfFactor(){return 1+(learningRunFactor()-1)*.45}
 function countRunFactor(){
   const m=baseMatchupPrediction(),adjusted=adjustForCount(m.probs);
   return clamp(offensiveIndex(adjusted)/Math.max(.01,offensiveIndex(m.probs)),.55,1.55);
 }
 function countHalfFactor(){return 1+(countRunFactor()-1)*.42}
-function baseMatchupPrediction(){
+function rawMatchupPrediction(){
   const ha=$('homeAway').value,team=battingTeam(ha,half),def=fieldingTeam(ha,half);
   const batter=currentBatterFor(team), pitcher=currentPitcherFor(def);
   const probs=model?eventProbs(batter,pitcher,def):initialEventProbs(team,batter,pitcher,def);
   return {team,def,batter,pitcher,probs};
+}
+function baseMatchupPrediction(){
+  const m=rawMatchupPrediction();return {...m,probs:applyObservedLearning(m.probs,m.batter,m.pitcher)};
 }
 function currentMatchupPrediction(){
   const m=baseMatchupPrediction();
@@ -777,7 +926,8 @@ function updatePrediction(){
     $('predictionTitle').textContent=`${batterName} vs ${pitcherName}｜B${balls}-S${strikes}`;
     setProbBox('probOut',outTotal);setProbBox('prob1B',p['1B']||0);setProbBox('prob2B',p['2B']||0);setProbBox('prob3B',p['3B']||0);setProbBox('probHR',p.HR||0);setProbBox('probBB',bbHbp);setProbBox('probK',p.K||0);
     const source=model?'読み込んだ2026打撃・投手CSVから推定。':'内蔵した2026選手係数からの近似。';
-    $('predictionNote').textContent=`${source} B${balls}-S${strikes}の試用補正を現在の打席だけに反映。アウト合計には三振を含みます。`;
+    const learned=observedLearning?.enabled&&learningEvidence(m.batter,m.pitcher).n>0?' 観戦データを基準へ追加反映。':'';
+    $('predictionNote').textContent=`${source}${learned} B${balls}-S${strikes}の試用補正を現在の打席だけに反映。アウト合計には三振を含みます。`;
     lastPrediction={title:`${batterName} vs ${pitcherName}`,probs:p,rows:predictionRows(p)};
   }catch(e){
     $('predictionTitle').textContent='--';
@@ -818,14 +968,14 @@ function openProbabilityDetail(kind){
 function initialWin(){
   const ha=$('homeAway').value,opp=$('opponent').value,inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
-  const firstCountFactor=countHalfFactor();
-  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v08'].join('|');
+  const firstCountFactor=countHalfFactor(),firstLearningFactor=learningHalfFactor();
+  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v09',learningFingerprint()].join('|');
   const rng=mulberry32(xmur3(state)());let w=0,d=0,l=0,N=5500;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
     while(!done){
       const bat=battingTeam(ha,h),def=bat===TEAM_T?opp:TEAM_T;
-      const mult=first?initialCurrentMultiplier(bat,def)*firstCountFactor*runnerSpeedFactor(bat):initialFutureMultiplier(bat,def);
+      const mult=first?initialCurrentMultiplier(bat,def)*firstCountFactor*firstLearningFactor*runnerSpeedFactor(bat):initialFutureMultiplier(bat,def);
       const lambda=clamp((first?RE[bases][outs]:RE[0][0])*mult,.015,2.6);
       const runs=poisson(lambda,rng);
       if(bat===TEAM_T)t+=runs;else o+=runs;
@@ -844,7 +994,7 @@ function simulateWin(){
   if(!model) return initialWin();
   const ha=$('homeAway').value, opp=$('opponent').value, inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
-  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated].join('|');
+  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,stats.updated,learningFingerprint()].join('|');
   const rng=mulberry32(xmur3(state)()); let w=0,d=0,l=0,N=4500;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
@@ -1024,13 +1174,14 @@ function resetOutsAndBases(){
   outs=0;bases=0;baseRunners={1:'',2:'',3:''};resetPitchCount();syncOutUI();syncBaseUI();
 }
 function snapshot(){
-  return {half,outs,balls,strikes,bases,baseRunners:{...baseRunners},inning:$('inning').value,tigersScore:$('tigersScore').value,oppScore:$('oppScore').value,tPos:$('tigersBatterPos').value,oPos:$('oppBatterPos').value,tLine:lineupIds(TEAM_T),oLine:lineupIds($('opponent').value),tPitcher:$('tigersPitcher').value,oPitcher:$('oppPitcher').value};
+  return {half,outs,balls,strikes,bases,baseRunners:{...baseRunners},inning:$('inning').value,tigersScore:$('tigersScore').value,oppScore:$('oppScore').value,tPos:$('tigersBatterPos').value,oPos:$('oppBatterPos').value,tLine:lineupIds(TEAM_T),oLine:lineupIds($('opponent').value),tPitcher:$('tigersPitcher').value,oPitcher:$('oppPitcher').value,learningLength:observedLearning?.entries?.length||0};
 }
 function restoreSnapshot(s){
   half=s.half;outs=s.outs;balls=s.balls||0;strikes=s.strikes||0;bases=s.bases;baseRunners={...s.baseRunners};
   $('inning').value=s.inning;$('tigersScore').value=s.tigersScore;$('oppScore').value=s.oppScore;$('tigersBatterPos').value=s.tPos;$('oppBatterPos').value=s.oPos;
   (s.tLine||[]).forEach((id,i)=>{if($('tLine'+i))$('tLine'+i).value=id});(s.oLine||[]).forEach((id,i)=>{if($('oLine'+i))$('oLine'+i).value=id});
   if(s.tPitcher!==undefined)$('tigersPitcher').value=s.tPitcher;if(s.oPitcher!==undefined)$('oppPitcher').value=s.oPitcher;
+  if(Number.isInteger(s.learningLength)&&observedLearning?.entries?.length>s.learningLength){observedLearning.entries=observedLearning.entries.slice(0,s.learningLength);saveObservedLearning()}
   setSubstitutionStatus('');
   $('topBtn').classList.toggle('active',half==='top');$('botBtn').classList.toggle('active',half==='bottom');
   refreshRunnerOptions();refreshSubstitutionUI();syncOutUI();syncCountUI();syncBaseUI();refreshBatterPosLabels();scheduleUpdate();
@@ -1073,7 +1224,9 @@ function batterRunnerId(team){
   return id&&id!==AVG_LINEUP_ID?id:AVG_LINEUP_ID;
 }
 function applyPlateResult(play){
+  const matchup=rawMatchupPrediction();
   pushHistory();
+  recordPlateObservation(play,matchup);
   const team=battingTeam($('homeAway').value,half);
   let r={1:baseRunners[1]||'',2:baseRunners[2]||'',3:baseRunners[3]||''}, next={1:r[1],2:r[2],3:r[3]}, scored=0;
   const batter=batterRunnerId(team);
@@ -1114,21 +1267,21 @@ function loadStats(){try{const x=localStorage.getItem('tigersStatsV5')||localSto
 async function importBat(file){
   const rows=parseCSV(await file.text()),bat=reduceBat(rows);
   if(bat.length<30)throw new Error('2026年の打撃データを十分に認識できませんでした');
-  stats=stats||{};stats.bat=bat;stats.updated=Date.now();saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast(`打者 ${bat.length}人を読み込みました`);
+  stats=stats||{};stats.bat=bat;stats.updated=Date.now();saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`打者 ${bat.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 async function importPit(file){
   const rows=parseCSV(await file.text()),pit=reducePit(rows);
   if(pit.length<30)throw new Error('2026年の投手データを十分に認識できませんでした');
-  stats=stats||{};stats.pit=pit;stats.updated=Date.now();saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました`);
+  stats=stats||{};stats.pit=pit;stats.updated=Date.now();saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 function exportData(){
   if(!model){toast('初期選手データは最初から内蔵済みです。共有書き出しはCSV更新後に使えます');return}
-  const blob=new Blob([JSON.stringify({version:8,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:9,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importJson(file){
   const x=JSON.parse(await file.text());if(x.season!==SEASON||!Array.isArray(x.bat)||!Array.isArray(x.pit))throw new Error('対応する共有データではありません');
-  stats={bat:x.bat,pit:x.pit,updated:x.updated||Date.now()};saveStats();buildModel();updateStatus();refreshPlayerUI();scheduleUpdate();toast('共有データを読み込みました');
+  stats={bat:x.bat,pit:x.pit,updated:x.updated||Date.now()};saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`共有データを読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 function setHalf(v,reset=false){
   const changed=half!==v;half=v;
@@ -1140,6 +1293,7 @@ function scheduleUpdate(){clearTimeout(calcTimer);calcTimer=setTimeout(update,40
 function update(){
   const ha=$('homeAway').value,opp=$('opponent').value,bat=battingTeam(ha,half);
   const speed=runnerSpeedFactor(bat),speedNote=Math.abs(speed-1)>.001?` 走者の走力補正 ${speed.toFixed(3)}倍。`:'';
+  const learningNote=observedLearning?.enabled&&learningIndex?.eligible?' 観戦データ学習を追加反映。':'';
   $('attackLabel').textContent=`攻撃側：${TEAM_NAME[bat]}`;
   let prob=RP[bases][outs],exp=RE[bases][outs];
   try{
@@ -1147,12 +1301,12 @@ function update(){
       const m=simulateInningMetrics();
       if(m){prob=m.prob;exp=m.exp}
       $('runModelLabel').textContent='2026詳細打席モデル';
-      $('runNote').textContent=`読み込んだ2026打撃・投手CSVから、現在打者・打順・投手を打席単位でシミュレーション。${speedNote}`;
+      $('runNote').textContent=`読み込んだ2026打撃・投手CSVから、現在打者・打順・投手を打席単位でシミュレーション。${learningNote}${speedNote}`;
     }else{
       const m=initialInningMetrics();
       if(m){prob=m.prob;exp=m.exp}
       $('runModelLabel').textContent='2026初期選手モデル';
-      $('runNote').textContent=`内蔵した2026選手係数で、現在から近い打者3人と現在投手を反映。投手未選択時は球団投手平均。${speedNote}`;
+      $('runNote').textContent=`内蔵した2026選手係数で、現在から近い打者3人と現在投手を反映。投手未選択時は球団投手平均。${learningNote}${speedNote}`;
     }
   }catch(e){
     prob=RP[bases][outs];exp=RE[bases][outs];
@@ -1170,7 +1324,7 @@ function update(){
   $('wText').textContent=`${p.w.toFixed(1)}%`;$('dText').textContent=`${p.d.toFixed(1)}%`;$('lText').textContent=`${p.l.toFixed(1)}%`;
   $('wp').style.width=p.w+'%';$('dp').style.width=p.d+'%';$('lp').style.width=p.l+'%';
   updateProbabilityDock(Number.isFinite(prob)?prob:RP[bases][outs],Number.isFinite(exp)?exp:RE[bases][outs],p);
-  $('winModelLabel').textContent=model?'12球団・詳細選手 4,500試合シミュレーション':'12球団・初期選手 5,500試合シミュレーション';
+  $('winModelLabel').textContent=(model?'12球団・詳細選手 4,500試合シミュレーション':'12球団・初期選手 5,500試合シミュレーション')+(observedLearning?.enabled&&learningIndex?.eligible?'＋観戦学習':'');
   const runnerRows=[];for(const [bit,key,label] of [[1,1,'一塁'],[2,2,'二塁'],[4,3,'三塁']]) if(bases&bit) runnerRows.push(`${label}：${runnerLabel(bat,baseRunners[key])||'未設定'}`);
   $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・B${balls}-S${strikes}・${runnerRows.length?runnerRows.join(' / '):'走者なし'}`;
 }
@@ -1206,11 +1360,15 @@ $('tigersPitcher').addEventListener('change',()=>{if($('tLine8'))$('tLine8').val
 $('oppPitcher').addEventListener('change',()=>{if(fieldingTeam($('homeAway').value,half)===$('opponent').value)resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
 $('opponent').addEventListener('change',()=>{resetOutsAndBases();setSubstitutionStatus('');refreshPlayerUI();scheduleUpdate()});
 $('importBatBtn').onclick=()=>$('batFile').click();$('importPitBtn').onclick=()=>$('pitFile').click();$('importDataBtn').onclick=()=>$('jsonFile').click();$('exportDataBtn').onclick=exportData;
+$('learningCapture').addEventListener('change',e=>{observedLearning.capture=e.target.checked;saveObservedLearning()});
+$('learningEnabled').addEventListener('change',e=>{observedLearning.enabled=e.target.checked;saveObservedLearning();scheduleUpdate()});
+$('clearLearningBtn').onclick=clearObservedLearning;$('exportLearningBtn').onclick=exportObservedLearning;$('importLearningBtn').onclick=()=>$('learningFile').click();
 $('batFile').onchange=async e=>{try{if(e.target.files[0])await importBat(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 $('pitFile').onchange=async e=>{try{if(e.target.files[0])await importPit(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 $('jsonFile').onchange=async e=>{try{if(e.target.files[0])await importJson(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
+$('learningFile').onchange=async e=>{try{if(e.target.files[0])await importObservedLearning(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 document.querySelectorAll('#probDock button').forEach(b=>b.onclick=()=>openProbabilityDetail(b.dataset.detail));
-loadStats();update();
+loadStats();loadObservedLearning();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 </body>
