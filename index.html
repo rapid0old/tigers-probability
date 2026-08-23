@@ -58,10 +58,21 @@ summary{cursor:pointer;font-weight:800;font-size:14px}
 .slot{font-size:12px;color:var(--muted);text-align:center}
 .small{font-size:11px;color:var(--muted);line-height:1.55}
 .actionGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.substitutionPanel{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.substitutionPanel{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.substitutionPanel>summary{font-size:14px}
+.substitutionPanel[open]>summary{margin-bottom:12px}
 .substitutionGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .substitutionGrid button{width:100%;margin-top:8px;min-height:44px}
 .substitutionStatus{min-height:18px;margin-top:10px;color:#d7d7db}
+.playerSettingsDetails{border:0;padding:0;margin:0}
+.playerSettingsDetails>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;list-style:none}
+.playerSettingsDetails>summary::-webkit-details-marker{display:none}
+.playerSettingsDetails>summary::after{content:'+';font-size:24px;color:var(--accent);line-height:1}
+.playerSettingsDetails[open]>summary::after{content:'-'}
+.playerSettingsDetails[open]>summary{margin-bottom:14px}
+.settingsSummaryText{font-size:12px;color:var(--muted);margin-left:auto}
+.lineupSaveRow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.lineupSaveRow button{padding:9px 10px;white-space:nowrap}
 .runnerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .playGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .playGrid button{min-height:46px}
@@ -101,7 +112,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.7 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.8 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -139,11 +150,21 @@ a{color:#b7cfff}
     <div><label>二塁走者</label><select id="runner2"></select></div>
     <div><label>三塁走者</label><select id="runner3"></select></div>
   </div>
+  <details class="substitutionPanel" open>
+    <summary id="substitutionSummary">選手交代</summary>
+    <div class="substitutionGrid">
+      <div><label id="pinchHitterLabel">代打</label><select id="pinchHitter"></select><button id="applyPinchHitter">現在の打順へ代打</button></div>
+      <div><label id="pinchRunnerLabel">代走</label><select id="pinchRunnerBase"><option value="1">一塁</option><option value="2">二塁</option><option value="3">三塁</option></select><select id="pinchRunner" style="margin-top:8px"></select><button id="applyPinchRunner">走者交代</button></div>
+      <div><label id="reliefPitcherLabel">投手交代</label><select id="reliefPitcher"></select><button id="applyReliefPitcher">現在投手へ交代</button></div>
+    </div>
+    <div class="small substitutionStatus" id="substitutionStatus" aria-live="polite"></div>
+  </details>
   <hr>
   <label>打席結果</label>
   <div class="playGrid">
     <button class="playBtn" data-play="OUT">凡退</button>
     <button class="playBtn" data-play="K">三振</button>
+    <button class="playBtn" data-play="SAC">送りバント</button>
     <button class="playBtn" data-play="BB">四死球</button>
     <button class="playBtn" data-play="1B">単打</button>
     <button class="playBtn" data-play="2B">二塁打</button>
@@ -154,34 +175,27 @@ a{color:#b7cfff}
 </section>
 
 <section class="card" id="playerCard">
-  <span class="badge">選手設定</span>
-  <div class="row">
-    <div><label>阪神・現在/次打者</label><select id="tigersBatterPos"></select></div>
-    <div><label>相手・現在/次打者</label><select id="oppBatterPos"></select></div>
-  </div>
-  <div style="height:10px"></div>
-  <div class="row">
-    <div><label>阪神・現在投手</label><select id="tigersPitcher"></select></div>
-    <div><label>相手・現在投手</label><select id="oppPitcher"></select></div>
-  </div>
-
-  <div class="substitutionPanel">
-    <span class="badge">阪神・選手交代</span>
-    <div class="substitutionGrid">
-      <div><label>代打</label><select id="pinchHitter"></select><button id="applyPinchHitter">現在の打順へ代打</button></div>
-      <div><label>代走</label><select id="pinchRunnerBase"><option value="1">一塁</option><option value="2">二塁</option><option value="3">三塁</option></select><select id="pinchRunner" style="margin-top:8px"></select><button id="applyPinchRunner">走者交代</button></div>
-      <div><label>投手交代</label><select id="reliefPitcher"></select><button id="applyReliefPitcher">現在投手へ交代</button></div>
+  <details class="playerSettingsDetails" id="playerSettingsDetails">
+    <summary><span class="badge">選手設定</span><span class="settingsSummaryText">打順・現在打者・投手</span></summary>
+    <div class="row">
+      <div><label>阪神・現在/次打者</label><select id="tigersBatterPos"></select></div>
+      <div><label>相手・現在/次打者</label><select id="oppBatterPos"></select></div>
     </div>
-    <div class="small substitutionStatus" id="substitutionStatus" aria-live="polite"></div>
-  </div>
+    <div style="height:10px"></div>
+    <div class="row">
+      <div><label>阪神・現在投手</label><select id="tigersPitcher"></select></div>
+      <div><label>相手・現在投手</label><select id="oppPitcher"></select></div>
+    </div>
 
-  <details>
+    <details>
     <summary>打順を設定（試合開始時に1回）</summary>
     <div class="row">
       <div><div class="small" style="margin-top:10px"><b>阪神</b></div><div id="tigersLineup" class="lineupGrid"></div></div>
       <div><div class="small" style="margin-top:10px"><b id="oppLineupTitle">相手</b></div><div id="oppLineup" class="lineupGrid"></div></div>
     </div>
     <div class="small" style="margin-top:10px">初期値は2026年の出場量が多い選手から自動設定します。実際のスタメン順に直すと、現在打者と打順が確率計算に反映されます。</div>
+    <div class="lineupSaveRow"><span class="small" id="opponentLineupSaveStatus">相手打順：球団ごとに自動保存</span><button id="clearOpponentLineup" class="secondary">保存打順を初期化</button></div>
+    </details>
   </details>
 </section>
 
@@ -281,6 +295,7 @@ const TEAMS = [
 const TEAM_NAME = Object.fromEntries(TEAMS);
 const AVG_LINEUP_ID='__avg__';
 const PITCHER_LINEUP_ID='__pitcher__';
+const OPP_LINEUP_STORAGE='tigersOpponentLineupsV1';
 const DISPLAY_NAME_OVERRIDES={"Akira Yagi":"八木彬","Akito Takabe":"髙部瑛斗","Alexander Canario":"カナリオ","Allan Winans":"ワイナンス","Anderson Espinoza":"エスピノーザ","Andre Jackson":"ジャクソン","Andres Machado":"マチャド","Anko Rin":"林安可","Aren Kuri":"九里亜蓮","Asahi Miyashita":"宮下朝陽","Atsuki Tomosugi":"友杉篤輝","Atsushi Endo":"遠藤淳志","Atsushi Katsumata":"勝又温史","Bob Seymour":"シーモア","Bobby Dalbec":"ダルベック","Carson Mccusker":"マッカスカー","Carter Stewart Jr.":"スチュワート・ジュニア","Chihiro Sumida":"隅田知一郎","Chusei Mannami":"万波中正","Cooper Hummel":"ヒュンメル","Daiki Tajima":"田嶋大樹","Daisuke Moriura":"森浦大輔","Daisuke Nakashima":"中島大輔","Domingo Santana":"サンタナ","Eito Tanaka":"田中瑛斗","Elehuris Montero":"モンテロ","Forrest Whitley":"ウィットリー","Franmil Reyes":"レイエス","Freddy Tarnok":"ターノック","Fumiya Kurokawa":"黒川史陽","Go Matsumoto":"松本剛","Gregory Polanco":"ポランコ","Haru Matsumoto":"松本晴","Haruki Hosono":"細野晴希","Haruto Inoe":"井上温大","Haruto Watanabe":"渡部遼人","Haruya Tanaka":"田中晴也","Hayato Sakamoto":"坂本勇人","Hideaki Wakui":"涌井秀章","Hideki Nagaoka":"長岡秀樹","Hideto Asamura":"浅村栄斗","Hikaru Kawase":"川瀬晃","Hikaru Ota":"太田光","Hiroki Fukunaga":"福永裕基","Hiroki Tokoda":"床田寛樹","Hiromi Ito":"伊藤大海","Hiroshi Kaino":"甲斐野央","Hiroto Kobukata":"小深田大翔","Hiroto Takahashi":"髙橋宏斗","Hirotoshi Takanashi":"高梨裕稔","Hisanori Yasuda":"安田尚憲","Hotaka Yamakawa":"山川穂高","Isami Nomura":"野村勇","Itsuki Murabayashi":"村林一輝","Jason Vosler":"ボスラー","Jerar Encarnacion":"エンカーナシオン","Jose Osuna":"オスナ","Jose Urena":"ウレーニャ","Junichiro Kishi":"岸潤一郎","Kaima Taira":"平良海馬","Kaito Kozono":"小園海斗","Kaito Mori":"森遼大朗","Kaito Muramatsu":"村松開人","Katsuki Azuma":"東克樹","Kazuki Sugiyama":"杉山一樹","Kazunari Ishii":"石井一成","Kazuya Maruyama":"丸山和郁","Kazuya Ojima":"小島和哉","Kazuyuki Takemaru":"竹丸和幸","Keiji Takahashi":"高橋奎二","Keita Nakagawa":"中川圭太","Keita Sano":"佐野恵太","Kengo Matsumoto":"松本健吾","Kengo Yoshida":"吉田賢吾","Kensuke Kondo":"近藤健介","Kenta Imamiya":"今宮健太","Kenta Maeda":"前田健太","Kentaro Shinogi":"篠木健太郎","Kentaro Taira":"平良拳太郎","Kenya Suzuki":"鈴木健矢","Kenya Wakatsuki":"若月健矢","Kohei Arihara":"有原航平","Kojiro Yoshimura":"吉村貢司郎","Koki Kitayama":"北山亘基","Koki Yamaguchi":"山口航輝","Kona Takahashi":"髙橋光成","Kosei Shoji":"荘司康誠","Koshiro Hiroike":"廣池康志郎","Kosuke Ukai":"鵜飼航丞","Kota Tatsu":"達孝太","Kota Yazawa":"矢澤宏太","Kotaro Kiyomiya":"清宮幸太郎","Kotaro Kurebayashi":"紅林弘太郎","Kyle Muller":"マラー","Kyota Fujiwara":"藤原恭大","Kyuto Ueda":"上田希由翔","Manaya Nishikawa":"西川愛也","Masahiro Tanaka":"田中将大","Masaki Mimori":"三森大貴","Masaru Fujii":"藤井聖","Masato Morishita":"森下暢仁","Masayuki Kuwahara":"桑原将志","Miguel Sano":"サノー","Mikiya Tanaka":"田中幹也","Minoru Omori":"大盛穂","Misho Nishikawa":"西川史礁","Naoki Sato":"佐藤直樹","Naoki Yoshikawa":"吉川尚輝","Naoyuki Uwasawa":"上沢直之","Naru Katsuda":"勝田成","Naruki Teranishi":"寺西成騎","Natsuki Takeuchi":"武内夏暉","Natsuo Takizawa":"滝澤夏央","Neftali Soto":"ソト","Norihiko Nabara":"名原典彦","Raidel Martinez":"マルティネス","Ren Fukushima":"福島蓮","Ren Hirakawa":"平川蓮","Ren Mukunoki":"椋木蓮","Riku Masuda":"増田陸","Rikuto Yokoyama":"横山陸人","Roberto Osuna":"オスナ","Rodolfo Castro":"カストロ","Ryo Ota":"太田椋","Ryoji Kuribayashi":"栗林良吏","Ryoma Nishikawa":"西川龍馬","Ryoma Yamanaka":"山中稜真","Ryosuke Kikuchi":"菊池涼介","Ryosuke Otsu":"大津亮介","Ryosuke Tatsumi":"辰己涼介","Ryota Takinaka":"瀧中瞭太","Ryoto Kita":"来田涼斗","Ryoya Kurihara":"栗原陵矢","Ryuhei Sotani":"曽谷龍平","Ryui Ito":"伊藤琉偉","Ryuki Watarai":"度会隆輝","Ryusei Ogawa":"小川龍成","Ryusei Takeoka":"武岡龍世","Ryusei Terachi":"寺地隆成","Ryuya Taira":"平良竜哉","Sam Long":"ロング","Sandro Fabian":"ファビアン","Sean Hjelle":"ジェリー","Sean Reynolds":"レイノルズ","Seiya Hosokawa":"細川成也","Seiya Watanabe":"渡部聖弥","Shinya Hasegawa":"長谷川信哉","Shinya Sugai":"菅井信也","Shion Matsuo":"松尾汐恩","Shogo Akiyama":"秋山翔吾","Shogo Sakakura":"坂倉将吾","Shogo Tamamura":"玉村昇悟","Shohei Mori":"森翔平","Shosei Togo":"戸郷翔征","Shu Masuda":"増田珠","Shugo Maki":"牧秀悟","Shun Mizutani":"水谷瞬","Shun Okamoto":"岡本駿","Shunsuke Sasaki":"佐々木俊輔","Shunsuke Urata":"浦田俊輔","Shuto Ogata":"尾形崇斗","Soichiro Yamazaki":"山﨑颯一郎","Soma Uchiyama":"内山壮真","Sosuke Genda":"源田壮亮","Tai Sasaki":"佐々木泰","Taichi Taka":"髙太一","Taichi Yamano":"山野太一","Taiga Hirasawa":"平沢大河","Taiga Kamichatani":"上茶谷大河","Taiga Kojima":"小島大河","Taiki Mochimaru":"持丸泰輝","Taiki Narama":"奈良間大己","Taisei Makihara":"牧原大成","Taito Takashima":"髙島泰都","Takahiro Norimoto":"則本昂大","Takahisa Hayakawa":"早川隆久","Takashi Umino":"海野隆司","Takaya Ishikawa":"石川昂弥","Takayuki Kato":"加藤貴之","Takayuki Kishi":"岸孝之","Takuma Hayashi":"林琢真","Takumi Oshiro":"大城卓三","Tatsuki Koja":"古謝樹","Tatsuki Mizuno":"水野達稀","Tatsuo Ebina":"蝦名達夫","Tatsuru Yanagimachi":"柳町達","Taylor Hearn":"ハーン","Tokito Kawamura":"河村説人","Tomohisa Ozeki":"大関友久","Tomoya Masaki":"正木智也","Tomoya Mori":"森友哉","Tomoya Noguchi":"野口智哉","Toshiki Abe":"阿部寿樹","Toshiro Miyazaki":"宮﨑敏郎","Toshiya Sato":"佐藤都志也","Trey Cabbage":"キャベッジ","Tyler Nevin":"ネビン","Ukyo Shuto":"周東佑京","Yasuhiro Ogawa":"小川泰弘","Yasunobu Okugawa":"奥川恭伸","Yorinosuke Sakurai":"櫻井頼之介","Yoshiaki Watanabe":"渡邊佳明","Yoshihiro Akahane":"赤羽由紘","Yoshitomo Tsutsugo":"筒香嘉智","Yota Kyoda":"京田陽太","Yua Tamiya":"田宮裕涼","Yudai Koga":"古賀優大","Yudai Ono":"大野雄大","Yudai Shoji":"庄子雄大","Yudai Yamamoto":"山本祐大","Yugo Maeda":"前田悠伍","Yuji Akahoshi":"赤星優志","Yuki Matsumoto":"松本裕樹","Yuki Nomura":"野村佑希","Yuki Okabayashi":"岡林勇希","Yuki Yanagita":"柳田悠岐","Yukihiro Iwata":"岩田幸宏","Yukinori Kishida":"岸田行倫","Yuma Mune":"宗佑磨","Yumeto Kanemaru":"金丸夢斗","Yuta Ishii":"石伊雄太","Yuta Izuguchi":"泉口友汰","Yutaro Ishida":"石田裕太郎","Yutaro Itayama":"板山祐太郎","Yutaro Watanabe":"渡邉勇太朗","Yuto Koga":"古賀悠斗","Yuya Gunji":"郡司裕也","Yuya Ogo":"小郷裕哉","Yuya Yanagi":"柳裕也"};
 const SORT_KEY_OVERRIDES={"近本光司":"chikamoto koji","中野拓夢":"nakano takumu","森下翔太":"morishita shota","佐藤輝明":"sato teruaki","大山悠輔":"ohyama yusuke","前川右京":"maegawa ukyo","坂本誠志郎":"sakamoto seishiro","元山飛優":"motoyama hiyu","髙寺望夢":"takatera nozomu","木浪聖也":"kinami seiya","小幡竜平":"obata ryuhei","熊谷敬宥":"kumagai takahiro","伏見寅威":"fushimi torai","福島圭音":"fukushima keito","立石正広":"tateishi masahiro","村上頌樹":"murakami shoki","才木浩人":"saiki hiroto","髙橋遥人":"takahashi haruto","大竹耕太郎":"ohtake kotaro","R.ドリス":"dolis rafael","工藤泰成":"kudo taisei"};
 Object.assign(SORT_KEY_OVERRIDES,{
@@ -342,12 +357,34 @@ function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
 const jaCollator=new Intl.Collator('ja-JP',{numeric:true,sensitivity:'base'});
 
 const $ = id => document.getElementById(id);
-let half='top', outs=0, balls=0, strikes=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[], lastPrediction=null, lastSummary=null;
+let half='top', outs=0, balls=0, strikes=0, bases=0, baseRunners={1:'',2:'',3:''}, stats=null, model=null, calcTimer=null, history=[], lastPrediction=null, lastSummary=null, savedOpponentLineups={};
 
 function toast(msg){const e=$('toast');e.textContent=msg;e.style.display='block';clearTimeout(e._t);e._t=setTimeout(()=>e.style.display='none',2600)}
 function num(x){const v=Number(String(x??'').replace(/,/g,''));return Number.isFinite(v)?v:0}
 function safeDiv(a,b){return b>0?a/b:0}
 function compactName(x){return String(x||'').replace(/[\s　]/g,'')}
+function loadSavedOpponentLineups(){
+  try{const raw=localStorage.getItem(OPP_LINEUP_STORAGE);savedOpponentLineups=raw?JSON.parse(raw):{}}catch(e){savedOpponentLineups={}}
+}
+function persistOpponentLineups(){try{localStorage.setItem(OPP_LINEUP_STORAGE,JSON.stringify(savedOpponentLineups))}catch(e){toast('相手打順を保存できませんでした')}}
+function lineupStorageValue(team,id){
+  if(id===AVG_LINEUP_ID||id===PITCHER_LINEUP_ID)return id;
+  const p=getPlayerById(team,id,'bat');return p?displayName(p):AVG_LINEUP_ID;
+}
+function savedOpponentLineupIds(team){
+  const saved=savedOpponentLineups[team];if(!Array.isArray(saved)||saved.length!==9)return null;
+  return saved.map(name=>name===AVG_LINEUP_ID||name===PITCHER_LINEUP_ID?name:(findPlayerIdByName(team,name,'bat')||AVG_LINEUP_ID));
+}
+function setOpponentLineupSaveStatus(text){if($('opponentLineupSaveStatus'))$('opponentLineupSaveStatus').textContent=text}
+function saveOpponentLineup(team){
+  if(!team||team===TEAM_T)return;
+  savedOpponentLineups[team]=lineupIds(team).map(id=>lineupStorageValue(team,id));persistOpponentLineups();
+  setOpponentLineupSaveStatus(`相手打順：${TEAM_NAME[team]}を自動保存済み`);
+}
+function clearOpponentLineup(){
+  const team=$('opponent').value;delete savedOpponentLineups[team];persistOpponentLineups();fillLineup(team,'oLine');refreshBatterPosLabels();scheduleUpdate();
+  setOpponentLineupSaveStatus(`相手打順：${TEAM_NAME[team]}を初期化`);toast('保存した相手打順を初期化しました');
+}
 function displayName(p){const n=typeof p==='string'?p:p?.name;return DISPLAY_NAME_OVERRIDES[n]||n||''}
 function sortKeyFor(p){
   const shown=displayName(p), raw=String(p?.name||shown||'');
@@ -782,7 +819,7 @@ function initialWin(){
   const ha=$('homeAway').value,opp=$('opponent').value,inn0=Number($('inning').value);
   const hs=Math.max(0,num($('tigersScore').value)),os=Math.max(0,num($('oppScore').value));
   const firstCountFactor=countHalfFactor();
-  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v07'].join('|');
+  const state=[inn0,half,outs,bases,balls,strikes,baseRunners[1],baseRunners[2],baseRunners[3],hs,os,ha,opp,currentPos(TEAM_T),currentPos(opp),$('tigersPitcher').value,$('oppPitcher').value,'initial-v08'].join('|');
   const rng=mulberry32(xmur3(state)());let w=0,d=0,l=0,N=5500;
   for(let s=0;s<N;s++){
     let t=hs,o=os,inn=inn0,h=half,first=true,done=false;
@@ -860,7 +897,7 @@ function setupStatic(){
   for(const [k,n] of TEAMS.filter(x=>x[0]!==TEAM_T)){const o=document.createElement('option');o.value=k;o.textContent=n;$('opponent').appendChild(o)}
   $('opponent').value='Giants';
   for(let i=0;i<9;i++){
-    for(const id of ['tigersLineup','oppLineup']){const d=document.createElement('div');d.className='slot';d.textContent=`${i+1}番`;const s=document.createElement('select');s.id=(id==='tigersLineup'?'tLine':'oLine')+i;d.dataset.for=s.id;$(id).append(d,s);s.addEventListener('change',()=>{refreshBatterPosLabels();scheduleUpdate()})}
+    for(const id of ['tigersLineup','oppLineup']){const d=document.createElement('div');d.className='slot';d.textContent=`${i+1}番`;const s=document.createElement('select');s.id=(id==='tigersLineup'?'tLine':'oLine')+i;d.dataset.for=s.id;$(id).append(d,s);s.addEventListener('change',()=>{if(id==='oppLineup')saveOpponentLineup($('opponent').value);refreshBatterPosLabels();scheduleUpdate()})}
   }
   for(let i=0;i<9;i++){for(const id of ['tigersBatterPos','oppBatterPos']){const o=document.createElement('option');o.value=i;o.textContent=`${i+1}番`;$(id).appendChild(o)}}
   $('inning').value='1';
@@ -870,6 +907,8 @@ function defaultLineupIds(team){
     return ['近本光司','中野拓夢','森下翔太','佐藤輝明','大山悠輔','前川右京','坂本誠志郎','元山飛優',PITCHER_LINEUP_ID]
       .map(name=>name===PITCHER_LINEUP_ID?PITCHER_LINEUP_ID:(findPlayerIdByName(team,name,'bat')||AVG_LINEUP_ID));
   }
+  const saved=savedOpponentLineupIds(team);
+  if(saved)return saved;
   const arr=activeModel()?.byBat?.[team]||[];
   return Array.from({length:9},(_,i)=>arr[i]?.id||AVG_LINEUP_ID);
 }
@@ -885,10 +924,16 @@ function fillSubstitutionSelect(sel,arr,type,placeholder){
   sel.value=[...sel.options].some(o=>o.value===old)?old:'';
 }
 function refreshSubstitutionUI(){
-  const m=activeModel(),batters=m?.byBat?.[TEAM_T]||[],pitchers=(m?.byPit?.[TEAM_T]||[]).filter(isReliefPitcher);
+  const m=activeModel(),batTeam=battingTeam($('homeAway').value,half),fieldTeam=fieldingTeam($('homeAway').value,half);
+  const batters=m?.byBat?.[batTeam]||[],allPitchers=m?.byPit?.[fieldTeam]||[];
+  const pitchers=fieldTeam===TEAM_T?allPitchers.filter(isReliefPitcher):allPitchers;
+  $('substitutionSummary').textContent=`選手交代（攻撃：${TEAM_NAME[batTeam]}）`;
+  $('pinchHitterLabel').textContent=`${TEAM_NAME[batTeam]}・代打`;
+  $('pinchRunnerLabel').textContent=`${TEAM_NAME[batTeam]}・代走`;
+  $('reliefPitcherLabel').textContent=`${TEAM_NAME[fieldTeam]}・投手交代`;
   fillSubstitutionSelect($('pinchHitter'),batters,'bat','代打を選択');
   fillSubstitutionSelect($('pinchRunner'),batters,'bat','代走を選択');
-  fillSubstitutionSelect($('reliefPitcher'),pitchers,'pit','救援投手を選択');
+  fillSubstitutionSelect($('reliefPitcher'),pitchers,'pit','交代投手を選択');
 }
 function fillLineup(team,prefix){
   const arr=activeModel()?.byBat?.[team]||[], sorted=sortedPlayers(arr), defaults=defaultLineupIds(team);
@@ -897,7 +942,7 @@ function fillLineup(team,prefix){
     const avg=document.createElement('option');avg.value=AVG_LINEUP_ID;avg.textContent='球団平均 / その他';sel.appendChild(avg);
     const pit=document.createElement('option');pit.value=PITCHER_LINEUP_ID;pit.textContent=pitcherLineupLabel(team);sel.appendChild(pit);
     for(const p of sorted){const o=document.createElement('option');o.value=p.id;o.textContent=playerOptionLabel(p,'bat');sel.appendChild(o)}
-    if(old&&[...sel.options].some(o=>o.value===old))sel.value=old;
+    if(team===TEAM_T&&old&&[...sel.options].some(o=>o.value===old))sel.value=old;
     else sel.value=defaults[i]||AVG_LINEUP_ID;
   }
 }
@@ -928,8 +973,10 @@ function refreshPlayerUI(){
   $('playerCard').style.opacity=1;
   for(const s of document.querySelectorAll('#playerCard select'))s.disabled=false;
   fillLineup(TEAM_T,'tLine');fillLineup(opp,'oLine');
+  setOpponentLineupSaveStatus(savedOpponentLineups[opp]?`相手打順：${TEAM_NAME[opp]}の保存打順を復元`:`相手打順：${TEAM_NAME[opp]}を球団ごとに自動保存`);
   fillPlayerSelect($('tigersPitcher'),m?.byPit?.[TEAM_T]||[]);
   fillPlayerSelect($('oppPitcher'),m?.byPit?.[opp]||[]);
+  setSubstitutionStatus('');
   refreshSubstitutionUI();
   refreshBatterPosLabels();
   refreshRunnerOptions();
@@ -985,27 +1032,25 @@ function restoreSnapshot(s){
   if(s.tPitcher!==undefined)$('tigersPitcher').value=s.tPitcher;if(s.oPitcher!==undefined)$('oppPitcher').value=s.oPitcher;
   setSubstitutionStatus('');
   $('topBtn').classList.toggle('active',half==='top');$('botBtn').classList.toggle('active',half==='bottom');
-  refreshRunnerOptions();syncOutUI();syncCountUI();syncBaseUI();refreshBatterPosLabels();scheduleUpdate();
+  refreshRunnerOptions();refreshSubstitutionUI();syncOutUI();syncCountUI();syncBaseUI();refreshBatterPosLabels();scheduleUpdate();
 }
 function pushHistory(){history.push(snapshot());if(history.length>40)history.shift();$('undoBtn').disabled=false}
 function undoLast(){const s=history.pop();if(!s)return;restoreSnapshot(s);$('undoBtn').disabled=!history.length}
 function setSubstitutionStatus(text){$('substitutionStatus').textContent=text}
 function applyPinchHitter(){
-  const id=$('pinchHitter').value,p=getPlayerById(TEAM_T,id,'bat');if(!p){toast('代打を選択してください');return}
-  pushHistory();const pos=currentPos(TEAM_T);$('tLine'+pos).value=id;
-  if(battingTeam($('homeAway').value,half)===TEAM_T)resetPitchCount();
-  refreshBatterPosLabels();refreshRunnerOptions();setSubstitutionStatus(`${pos+1}番に代打 ${displayName(p)}`);scheduleUpdate();
+  const team=battingTeam($('homeAway').value,half),id=$('pinchHitter').value,p=getPlayerById(team,id,'bat');if(!p){toast('代打を選択してください');return}
+  pushHistory();const pos=currentPos(team),prefix=team===TEAM_T?'tLine':'oLine';$(prefix+pos).value=id;
+  resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();refreshSubstitutionUI();setSubstitutionStatus(`${TEAM_NAME[team]} ${pos+1}番に代打 ${displayName(p)}`);scheduleUpdate();
 }
 function applyPinchRunner(){
-  const id=$('pinchRunner').value,p=getPlayerById(TEAM_T,id,'bat'),base=Number($('pinchRunnerBase').value),bit=base===3?4:base;
-  if(!p){toast('代走を選択してください');return}if(battingTeam($('homeAway').value,half)!==TEAM_T){toast('阪神の攻撃中に代走を設定できます');return}if(!(bases&bit)){toast(`${base}塁に走者がいません`);return}
-  pushHistory();baseRunners[base]=id;syncBaseUI();setSubstitutionStatus(`${base}塁に代走 ${displayName(p)}`);scheduleUpdate();
+  const team=battingTeam($('homeAway').value,half),id=$('pinchRunner').value,p=getPlayerById(team,id,'bat'),base=Number($('pinchRunnerBase').value),bit=base===3?4:base;
+  if(!p){toast('代走を選択してください');return}if(!(bases&bit)){toast(`${base}塁に走者がいません`);return}
+  pushHistory();baseRunners[base]=id;syncBaseUI();refreshSubstitutionUI();setSubstitutionStatus(`${TEAM_NAME[team]} ${base}塁に代走 ${displayName(p)}`);scheduleUpdate();
 }
 function applyReliefPitcher(){
-  const id=$('reliefPitcher').value,p=getPlayerById(TEAM_T,id,'pit');if(!p){toast('救援投手を選択してください');return}
-  pushHistory();$('tigersPitcher').value=id;if($('tLine8'))$('tLine8').value=PITCHER_LINEUP_ID;
-  if(fieldingTeam($('homeAway').value,half)===TEAM_T)resetPitchCount();
-  refreshBatterPosLabels();refreshRunnerOptions();setSubstitutionStatus(`投手交代 ${displayName(p)}（${pitcherRole(p)}）`);scheduleUpdate();
+  const team=fieldingTeam($('homeAway').value,half),id=$('reliefPitcher').value,p=getPlayerById(team,id,'pit');if(!p){toast('交代投手を選択してください');return}
+  pushHistory();const pitcherSelect=team===TEAM_T?$('tigersPitcher'):$('oppPitcher');pitcherSelect.value=id;if(team===TEAM_T&&$('tLine8'))$('tLine8').value=PITCHER_LINEUP_ID;
+  resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();refreshSubstitutionUI();const role=pitcherRole(p);setSubstitutionStatus(`${TEAM_NAME[team]} 投手交代 ${displayName(p)}${role?`（${role}）`:''}`);scheduleUpdate();
 }
 function advanceBatter(team){
   const sel=team===TEAM_T?$('tigersBatterPos'):$('oppBatterPos');
@@ -1033,6 +1078,9 @@ function applyPlateResult(play){
   const batter=batterRunnerId(team);
   if(play==='OUT'||play==='K'){
     outs=Math.min(3,outs+1);
+  }else if(play==='SAC'){
+    outs=Math.min(3,outs+1);
+    if(outs<3){scored=r[3]?1:0;next={1:'',2:r[1]||'',3:r[2]||''}}
   }else if(play==='HR'){
     scored=1+(r[1]?1:0)+(r[2]?1:0)+(r[3]?1:0);next={1:'',2:'',3:''};
   }else if(play==='3B'){
@@ -1056,7 +1104,7 @@ function updateStatus(){
     $('dataStatus').innerHTML=`<strong>詳細選手モデルON</strong><br>読込CSV 2026：打者 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>端末への読込：${new Date(stats.updated).toLocaleString('ja-JP')}`;
     $('modelBadge').className='badge good';$('modelBadge').textContent='2026詳細選手モデル';
   }else{
-    $('dataStatus').innerHTML='<strong>初期選手モデルON</strong><br>2026年8月22日確認：主要打者に阪神の控え野手13人、主要投手に阪神の救援投手10人を追加。代打・代走・中継ぎ・クローザーを選択できます。';
+    $('dataStatus').innerHTML='<strong>初期選手モデルON</strong><br>2026年8月22日確認：主要打者に阪神の控え野手13人、主要投手に阪神の救援投手10人を追加。両チームの代打・代走・投手交代を選択できます。';
     $('modelBadge').className='badge good';$('modelBadge').textContent='2026初期選手モデル';
   }
 }
@@ -1074,7 +1122,7 @@ async function importPit(file){
 }
 function exportData(){
   if(!model){toast('初期選手データは最初から内蔵済みです。共有書き出しはCSV更新後に使えます');return}
-  const blob=new Blob([JSON.stringify({version:7,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:8,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importJson(file){
@@ -1084,8 +1132,8 @@ async function importJson(file){
 function setHalf(v,reset=false){
   const changed=half!==v;half=v;
   $('topBtn').classList.toggle('active',v==='top');$('botBtn').classList.toggle('active',v==='bottom');
-  if(reset&&changed) resetOutsAndBases();
-  refreshRunnerOptions();scheduleUpdate();
+  if(reset&&changed){resetOutsAndBases();setSubstitutionStatus('')}
+  refreshRunnerOptions();refreshSubstitutionUI();scheduleUpdate();
 }
 function scheduleUpdate(){clearTimeout(calcTimer);calcTimer=setTimeout(update,40)}
 function update(){
@@ -1125,7 +1173,7 @@ function update(){
   const runnerRows=[];for(const [bit,key,label] of [[1,1,'一塁'],[2,2,'二塁'],[4,3,'三塁']]) if(bases&bit) runnerRows.push(`${label}：${runnerLabel(bat,baseRunners[key])||'未設定'}`);
   $('statusText').innerHTML=`<b>${$('inning').value}回${half==='top'?'表':'裏'}・${TEAM_NAME[bat]}の攻撃</b><br>阪神 ${num($('tigersScore').value)} − ${num($('oppScore').value)} ${TEAM_NAME[opp]}<br>${outs}アウト・B${balls}-S${strikes}・${runnerRows.length?runnerRows.join(' / '):'走者なし'}`;
 }
-setupStatic();
+loadSavedOpponentLineups();setupStatic();
 $('topBtn').onclick=()=>{pushHistory();setHalf('top',true)};$('botBtn').onclick=()=>{pushHistory();setHalf('bottom',true)};
 $('nextHalf').onclick=()=>{pushHistory();nextHalf()};
 document.querySelectorAll('.outBtn').forEach(b=>b.onclick=()=>{
@@ -1148,13 +1196,14 @@ for(const base of [1,2,3]) $('runner'+base).addEventListener('change',e=>{
 document.querySelectorAll('.playBtn').forEach(b=>b.onclick=()=>applyPlateResult(b.dataset.play));
 $('undoBtn').onclick=undoLast;
 $('applyPinchHitter').onclick=applyPinchHitter;$('applyPinchRunner').onclick=applyPinchRunner;$('applyReliefPitcher').onclick=applyReliefPitcher;
-$('homeAway').addEventListener('change',()=>{pushHistory();resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
+$('clearOpponentLineup').onclick=clearOpponentLineup;
+$('homeAway').addEventListener('change',()=>{pushHistory();resetOutsAndBases();setSubstitutionStatus('');refreshRunnerOptions();refreshSubstitutionUI();scheduleUpdate()});
 ['tigersScore','oppScore'].forEach(id=>$(id).addEventListener('input',scheduleUpdate));
 ['tigersBatterPos','oppBatterPos'].forEach(id=>{$(id).addEventListener('input',scheduleUpdate);$(id).addEventListener('change',()=>{resetPitchCount();refreshRunnerOptions();scheduleUpdate()})});
 $('inning').addEventListener('change',()=>{pushHistory();resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
 $('tigersPitcher').addEventListener('change',()=>{if($('tLine8'))$('tLine8').value=PITCHER_LINEUP_ID;if(fieldingTeam($('homeAway').value,half)===TEAM_T)resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
 $('oppPitcher').addEventListener('change',()=>{if(fieldingTeam($('homeAway').value,half)===$('opponent').value)resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
-$('opponent').addEventListener('change',()=>{resetOutsAndBases();refreshPlayerUI();scheduleUpdate()});
+$('opponent').addEventListener('change',()=>{resetOutsAndBases();setSubstitutionStatus('');refreshPlayerUI();scheduleUpdate()});
 $('importBatBtn').onclick=()=>$('batFile').click();$('importPitBtn').onclick=()=>$('pitFile').click();$('importDataBtn').onclick=()=>$('jsonFile').click();$('exportDataBtn').onclick=exportData;
 $('batFile').onchange=async e=>{try{if(e.target.files[0])await importBat(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
 $('pitFile').onchange=async e=>{try{if(e.target.files[0])await importPit(e.target.files[0])}catch(err){toast(err.message)}e.target.value=''};
