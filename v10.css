@@ -1,0 +1,42 @@
+button{transition:transform .08s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
+button:active{transform:scale(.97);background:#343439;border-color:#76767e}
+button.pressedFeedback{background:var(--accent);border-color:var(--accent);color:#111;box-shadow:0 0 0 3px rgba(242,210,27,.18)}
+.fieldStateDetails{border:1px solid var(--line);border-radius:8px;margin:8px 0 2px;padding:0;background:#141416}
+.fieldStateDetails>summary{padding:12px 13px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.fieldStateDetails>summary::-webkit-details-marker{display:none}
+.fieldStateDetails>summary::after{content:'+';font-size:22px;color:var(--accent);line-height:1}
+.fieldStateDetails[open]>summary::after{content:'-'}
+.fieldStateDetails[open]>summary{border-bottom:1px solid var(--line)}
+.fieldStateBody{padding:12px}
+.matchupPanel{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.matchupItem{min-width:0;border-left:3px solid var(--accent);padding:4px 0 4px 10px}
+.matchupLabel{font-size:11px;color:var(--muted);margin-bottom:4px}
+.matchupValue{font-size:15px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fatigueControl{grid-column:1/-1;display:grid;grid-template-columns:1fr minmax(138px,190px);align-items:end;gap:10px;padding-top:4px}
+.fatigueControl label{margin:0 0 6px}
+.runnerGrid{margin-top:0}
+.runnerGrid>div{min-width:0}
+.runnerActions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+.runnerActions button{padding:9px 5px;min-height:40px}
+.searchSelect{display:flex;gap:6px;align-items:stretch;min-width:0;width:100%}
+.searchSelect select{min-width:0;flex:1}
+.searchTrigger{flex:0 0 48px;padding:8px 4px;font-size:12px;min-height:44px}
+.lastActionStatus{margin-top:9px;padding:10px 12px;border-left:3px solid var(--accent);background:#111114;color:#dedee2;font-size:12px;line-height:1.5;min-height:38px}
+.playerSearchDialog,.stealDialog{width:min(500px,calc(100% - 24px));max-height:min(720px,calc(100dvh - 28px));color:var(--text);background:var(--card);border:1px solid #55555c;border-radius:8px;padding:16px;box-shadow:0 18px 55px rgba(0,0,0,.65)}
+.playerSearchDialog::backdrop,.stealDialog::backdrop{background:rgba(0,0,0,.72)}
+.dialogHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.dialogHeader strong{font-size:16px}
+.dialogHeader button{width:40px;height:40px;padding:0;font-size:22px}
+.playerSearchDialog input[type=search]{width:100%;font-size:16px;color:var(--text);background:var(--card2);border:1px solid var(--line);border-radius:8px;padding:12px;outline:none;color-scheme:dark}
+.playerSearchResults{display:grid;gap:6px;margin-top:10px;max-height:52dvh;overflow:auto;padding-right:2px}
+.playerSearchResult{text-align:left;border-radius:6px;padding:11px 12px;min-height:44px}
+.playerSearchEmpty{color:var(--muted);padding:18px 4px;text-align:center;font-size:13px}
+.stealText{font-size:14px;line-height:1.6;margin:4px 0 14px}
+.stealActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.stealActions .cancelSteal{grid-column:1/-1}
+.rosterSourceNote{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
+@media(max-width:520px){
+  .matchupPanel{grid-template-columns:1fr}
+  .fatigueControl{grid-column:auto;grid-template-columns:1fr}
+  .runnerGrid{grid-template-columns:1fr}
+}

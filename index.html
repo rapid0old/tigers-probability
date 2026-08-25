@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="阪神確率">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./v10.css">
 <title>阪神 試合確率チェッカー</title>
 <style>
 :root{--bg:#0f0f10;--card:#19191b;--card2:#222225;--text:#f6f6f6;--muted:#a9a9ae;--line:#333338;--accent:#f2d21b;--good:#61d37a;--bad:#ff6b6b;--blue:#67a8ff}
@@ -121,7 +122,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v0.9 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v1.0 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -309,6 +310,7 @@ a{color:#b7cfff}
 </dialog>
 <div id="toast" class="toast"></div>
 
+<script src="./rosters.js"></script>
 <script>
 const SEASON = 2026;
 const TEAM_T = 'Tigers';
@@ -1371,5 +1373,6 @@ document.querySelectorAll('#probDock button').forEach(b=>b.onclick=()=>openProba
 loadStats();loadObservedLearning();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
+<script src="./app-v10.js"></script>
 </body>
 </html>
