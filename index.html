@@ -122,7 +122,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v1.0 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v1.1 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -1335,14 +1335,14 @@ $('topBtn').onclick=()=>{pushHistory();setHalf('top',true)};$('botBtn').onclick=
 $('nextHalf').onclick=()=>{pushHistory();nextHalf()};
 document.querySelectorAll('.outBtn').forEach(b=>b.onclick=()=>{
   const next=Number(b.dataset.o), team=battingTeam($('homeAway').value,half);
-  if(next>outs){pushHistory();outs=next;advanceBatter(team);resetPitchCount()}
+  pushHistory();if(next>outs){outs=next;advanceBatter(team);resetPitchCount()}
   else outs=next;
   syncOutUI();refreshBatterPosLabels();scheduleUpdate();
 });
-document.querySelectorAll('.ballBtn').forEach(b=>b.onclick=()=>{balls=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
-document.querySelectorAll('.strikeBtn').forEach(b=>b.onclick=()=>{strikes=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
+document.querySelectorAll('.ballBtn').forEach(b=>b.onclick=()=>{pushHistory();balls=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
+document.querySelectorAll('.strikeBtn').forEach(b=>b.onclick=()=>{pushHistory();strikes=Number(b.dataset.count);syncCountUI();scheduleUpdate()});
 [1,2,3].forEach(base=>$('b'+base).onclick=()=>{
-  const bit=baseBit(base);bases^=bit;if(bases&bit)baseRunners[base]=baseRunners[base]||AVG_LINEUP_ID;else baseRunners[base]='';
+  pushHistory();const bit=baseBit(base);bases^=bit;if(bases&bit)baseRunners[base]=baseRunners[base]||AVG_LINEUP_ID;else baseRunners[base]='';
   syncBaseUI();scheduleUpdate();
 });
 for(const base of [1,2,3]) $('runner'+base).addEventListener('change',e=>{
@@ -1354,10 +1354,10 @@ document.querySelectorAll('.playBtn').forEach(b=>b.onclick=()=>applyPlateResult(
 $('undoBtn').onclick=undoLast;
 $('applyPinchHitter').onclick=applyPinchHitter;$('applyPinchRunner').onclick=applyPinchRunner;$('applyReliefPitcher').onclick=applyReliefPitcher;
 $('clearOpponentLineup').onclick=clearOpponentLineup;
-$('homeAway').addEventListener('change',()=>{pushHistory();resetOutsAndBases();setSubstitutionStatus('');refreshRunnerOptions();refreshSubstitutionUI();scheduleUpdate()});
+$('homeAway').addEventListener('change',()=>{resetOutsAndBases();setSubstitutionStatus('');refreshRunnerOptions();refreshSubstitutionUI();scheduleUpdate()});
 ['tigersScore','oppScore'].forEach(id=>$(id).addEventListener('input',scheduleUpdate));
 ['tigersBatterPos','oppBatterPos'].forEach(id=>{$(id).addEventListener('input',scheduleUpdate);$(id).addEventListener('change',()=>{resetPitchCount();refreshRunnerOptions();scheduleUpdate()})});
-$('inning').addEventListener('change',()=>{pushHistory();resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
+$('inning').addEventListener('change',()=>{resetOutsAndBases();refreshRunnerOptions();scheduleUpdate()});
 $('tigersPitcher').addEventListener('change',()=>{if($('tLine8'))$('tLine8').value=PITCHER_LINEUP_ID;if(fieldingTeam($('homeAway').value,half)===TEAM_T)resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
 $('oppPitcher').addEventListener('change',()=>{if(fieldingTeam($('homeAway').value,half)===$('opponent').value)resetPitchCount();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()});
 $('opponent').addEventListener('change',()=>{resetOutsAndBases();setSubstitutionStatus('');refreshPlayerUI();scheduleUpdate()});

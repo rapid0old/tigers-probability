@@ -6,5 +6,5 @@
   "display": "standalone",
   "background_color": "#0f0f10",
   "theme_color": "#111111",
-  "description": "2026年12球団の現役支配下選手、選手検索、試合状態の自動保存、投手疲労、観戦入力の追加学習を扱う私的利用PWA"
+  "description": "2026年12球団の選手モデル、試合終了判定、Undo・Redo、自動保存、投手疲労、観戦入力の追加学習を扱う私的利用PWA"
 }
