@@ -1,5 +1,5 @@
-const CACHE='tigers-probability-v1.2.1-trial';
-const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg','./v10.css','./rosters.js','./app-v10.js'];
+const CACHE='tigers-probability-v1.3.0-trial';
+const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg','./v10.css','./rosters.js','./stats-v13.js','./app-v10.js'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));

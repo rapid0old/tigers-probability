@@ -122,7 +122,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v1.2.1 試用版</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v1.3.0 試用版</div></div></header>
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -282,16 +282,16 @@ a{color:#b7cfff}
 <section class="card">
   <div class="note">
     <b>選手モデルのロジック</b><br>
-    初期状態では、2026年の12球団の主要選手に加え、阪神の控え野手・救援投手を含む<b>打撃力係数（wOBAベース）</b>と<b>投手係数（FIPベース）</b>を内蔵しています。打席数・投球回が少ない選手ほどリーグ平均へ縮約して、小標本の暴れを抑えています。現在打者から近い3人、現在投手、走者の走力を使って、24状況の得点確率・得点期待値を補正し、残り試合をシミュレーションします。<br><br>
-    次打席予測は、詳細CSVがある場合は打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。CSVがない場合は、内蔵した打撃力・投手係数から近似分布を表示します。観戦中に入力した打席結果は端末内だけに保存し、基準値を強く残したまま打者・投手・対戦別の追加サンプルとして反映します。現在のボール・ストライクは、四球・三振・インプレーの到達確率と打者有利/投手有利の差を使う試用補正として、現在の打席だけに反映します。代打・代走・投手交代は手動で現在状態へ反映します。守備・球場・左右別・対戦相性・交代選手の自動予測はまだ未反映です。
+    初期状態から、2026年の12球団公式個人成績を<b>打席イベント単位</b>で内蔵しています。打者120打席、投手180打者分をリーグ平均へ縮約して、小標本の暴れを抑えています。現在打者から近い3人、現在投手、走者の走力を使って、24状況の得点確率・得点期待値を補正し、残り試合をシミュレーションします。<br><br>
+    次打席予測は、打者の1B/2B/3B/HR/四球/死球/三振と、投手の被安打/被本塁打/四球/死球/奪三振を使います。観戦中に入力した打席結果は端末内だけに保存し、基準値を強く残したまま打者・投手・同一対戦の追加サンプルとして反映します。さらに、投打の左右、選択球場の得点環境、投球数による疲労、現在カウントを順に保守的補正として適用します。補正の内容と実際の確率差は「次打席」から「計算要素の詳細」を開いて確認できます。守備力、個人別球場成績、外部の直接対戦成績は未反映です。
   </div>
 </section>
 
 <footer>
 得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
 内蔵選手名：<a href="https://npb.jp/bis/teams/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 2026年度選手一覧</a>、<a href="https://m.hanshintigers.jp/data/player_list/2026" target="_blank" rel="noopener noreferrer">阪神タイガース公式 2026選手プロフィール</a>。<br>
-初期選手係数：NPB公式の2026個人成績・チーム成績、およびv0.4内蔵係数を基にした派生値。成績表そのものは同梱せず、正規化・縮約した係数と表示・計算に必要な最小限の集計値を内蔵しています。<br>
-阪神の控え・救援データ：<a href="https://npb.jp/bis/2026/stats/idb1_t.html" target="_blank" rel="noopener noreferrer">NPB公式 2026阪神個人打撃成績</a>、<a href="https://npb.jp/bis/2026/stats/idp1_t.html" target="_blank" rel="noopener noreferrer">NPB公式 2026阪神個人投手成績</a>（2026年8月22日確認）から正規化・縮約した派生係数。<br>
+公式選手成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式 2026個人成績</a>と日別投打成績を2026年8月28日終了試合まで反映。通常更新は前回以降の試合IDだけを追加します。<br>
+左右・球場補正：NPB公式の投打情報、2024年以降のNPB公式試合結果、<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式 2025左右別wOBA公開集計</a>を保守的に縮約して使用。<br>
 カウント補正の方向性：<a href="https://www.mlb.com/glossary/statcast/catcher-framing" target="_blank" rel="noopener noreferrer">MLB公式 Statcast Glossary</a>の公開例（2025年の1-0後と0-1後のOPS差）を確認し、NPB実測値とは区別した保守的な試用係数として実装しています。<br>
 非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
 </footer>
@@ -311,6 +311,7 @@ a{color:#b7cfff}
 <div id="toast" class="toast"></div>
 
 <script src="./rosters.js"></script>
+<script src="./stats-v13.js"></script>
 <script>
 const SEASON = 2026;
 const TEAM_T = 'Tigers';
@@ -325,7 +326,7 @@ const TEAM_NAME = Object.fromEntries(TEAMS);
 const AVG_LINEUP_ID='__avg__';
 const PITCHER_LINEUP_ID='__pitcher__';
 const OPP_LINEUP_STORAGE='tigersOpponentLineupsV1';
-const BUILTIN_SNAPSHOT_DATE='2026-08-22';
+const BUILTIN_SNAPSHOT_DATE=window.NPB_2026_STATS_SNAPSHOT?.snapshotDate||'2026-08-28';
 const LEARNING_STORAGE='tigersObservedLearningV1';
 const LEARNING_EVENTS=['1B','2B','3B','HR','BB','K','OUT'];
 const LEARNING_PRIOR_PA=48;
@@ -1257,33 +1258,47 @@ function applyPlateResult(play){
 }
 function updateStatus(){
   if(model&&stats?.bat?.length&&stats?.pit?.length){
-    $('dataStatus').innerHTML=`<strong>詳細選手モデルON</strong><br>読込CSV 2026：打者 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>端末への読込：${new Date(stats.updated).toLocaleString('ja-JP')}`;
+    const source=stats.builtin?'内蔵公式スナップショット':'端末内の読込データ';
+    $('dataStatus').innerHTML=`<strong>詳細選手モデルON</strong><br>${source}：野手 ${stats.bat.length}人 / 投手 ${stats.pit.length}人<br>基準日：${(stats.snapshotDate||localDateValue(new Date(stats.updated))).replaceAll('-','/')}`;
     $('modelBadge').className='badge good';$('modelBadge').textContent='2026詳細選手モデル';
   }else{
-    $('dataStatus').innerHTML='<strong>初期選手モデルON</strong><br>2026年8月22日確認：主要打者に阪神の控え野手13人、主要投手に阪神の救援投手10人を追加。両チームの代打・代走・投手交代を選択できます。';
+    $('dataStatus').innerHTML='<strong>初期選手モデルON</strong><br>公式詳細データを読み込めない場合の安全なフォールバックです。';
     $('modelBadge').className='badge good';$('modelBadge').textContent='2026初期選手モデル';
   }
 }
 function saveStats(){try{localStorage.setItem('tigersStatsV5',JSON.stringify(stats))}catch(e){toast('保存容量エラー')}}
-function loadStats(){try{const x=localStorage.getItem('tigersStatsV5')||localStorage.getItem('tigersStatsV4')||localStorage.getItem('tigersStatsV3');if(x)stats=JSON.parse(x)}catch(e){}buildModel();updateStatus();refreshPlayerUI()}
+function stableBuiltinStats(){
+  const source=window.NPB_2026_STATS_SNAPSHOT;if(!source?.bat?.length||!source?.pit?.length)return null;
+  const stable=(players,type)=>players.map(player=>{
+    const existing=(type==='bat'?initialModel.byBat[player.team]:initialModel.byPit[player.team])?.find(candidate=>compactName(displayName(candidate))===compactName(player.name));
+    return existing?{...player,id:existing.id}:{...player};
+  });
+  return {bat:stable(source.bat,'bat'),pit:stable(source.pit,'pit'),updated:source.updated,snapshotDate:source.snapshotDate,parks:source.parks,platoon:source.platoon,builtin:true};
+}
+function loadStats(){
+  const builtin=stableBuiltinStats();let saved=null;
+  try{const x=localStorage.getItem('tigersStatsV5')||localStorage.getItem('tigersStatsV4')||localStorage.getItem('tigersStatsV3');if(x)saved=JSON.parse(x)}catch(e){}
+  stats=saved?.bat?.length&&saved?.pit?.length&&saved.snapshotDate>=builtin?.snapshotDate?saved:(builtin||saved);
+  buildModel();updateStatus();refreshPlayerUI();
+}
 async function importBat(file){
   const rows=parseCSV(await file.text()),bat=reduceBat(rows);
   if(bat.length<30)throw new Error('2026年の打撃データを十分に認識できませんでした');
-  stats=stats||{};stats.bat=bat;stats.updated=Date.now();saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`打者 ${bat.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
+  stats=stats||{};stats.bat=bat;stats.updated=Date.now();stats.snapshotDate=localDateValue();stats.builtin=false;saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`打者 ${bat.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 async function importPit(file){
   const rows=parseCSV(await file.text()),pit=reducePit(rows);
   if(pit.length<30)throw new Error('2026年の投手データを十分に認識できませんでした');
-  stats=stats||{};stats.pit=pit;stats.updated=Date.now();saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
+  stats=stats||{};stats.pit=pit;stats.updated=Date.now();stats.snapshotDate=localDateValue();stats.builtin=false;saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`投手 ${pit.length}人を読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 function exportData(){
   if(!model){toast('初期選手データは最初から内蔵済みです。共有書き出しはCSV更新後に使えます');return}
-  const blob=new Blob([JSON.stringify({version:9,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated})],{type:'application/json'});
+  const blob=new Blob([JSON.stringify({version:13,season:SEASON,bat:stats.bat,pit:stats.pit,updated:stats.updated,snapshotDate:stats.snapshotDate,parks:stats.parks,platoon:stats.platoon})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`npb2026_player_data_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 async function importJson(file){
   const x=JSON.parse(await file.text());if(x.season!==SEASON||!Array.isArray(x.bat)||!Array.isArray(x.pit))throw new Error('対応する共有データではありません');
-  stats={bat:x.bat,pit:x.pit,updated:x.updated||Date.now()};saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`共有データを読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
+  stats={bat:x.bat,pit:x.pit,updated:x.updated||Date.now(),snapshotDate:x.snapshotDate||localDateValue(),parks:x.parks||window.NPB_2026_STATS_SNAPSHOT?.parks,platoon:x.platoon||window.NPB_2026_STATS_SNAPSHOT?.platoon,builtin:false};saveStats();buildModel();const learningReset=ensureLearningBaseline(false);updateStatus();refreshPlayerUI();scheduleUpdate();toast(`共有データを読み込みました${learningReset?'。旧観戦学習は破棄しました':''}`);
 }
 function setHalf(v,reset=false){
   const changed=half!==v;half=v;

@@ -6,5 +6,5 @@
   "display": "standalone",
   "background_color": "#0f0f10",
   "theme_color": "#111111",
-  "description": "2026年12球団の選手モデル、全画面内に収まる上部固定入力、SBO表示、走者移動選択、Undo・Redo、自動保存、投手疲労、観戦入力の追加学習を扱う私的利用PWA"
+  "description": "2026年12球団の公式個人成績、左右・球場・カウント・投手疲労補正、差分データ更新、走者移動、Undo・Redo、自動保存、観戦入力の追加学習を扱う私的利用PWA"
 }

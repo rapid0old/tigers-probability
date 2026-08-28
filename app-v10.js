@@ -4,6 +4,11 @@
 const GAME_STORAGE = 'tigersGameStateV1';
 const AVG_PITCHER_ID = '__avg_pitcher__';
 const rosterSnapshot = window.NPB_2026_ROSTER_SNAPSHOT || {snapshotDate:'',rosters:{}};
+const statsSnapshot = window.NPB_2026_STATS_SNAPSHOT || {snapshotDate:'',parks:{factors:{}},platoon:{factors:{}}};
+const PRIMARY_PARK_BY_TEAM = {
+  Giants:'tokyo-dome', Tigers:'koshien', BayStars:'yokohama', Carp:'mazda', Dragons:'vantelin', Swallows:'jingu',
+  Hawks:'paypay', Fighters:'escon', Buffaloes:'kyocera', Eagles:'rakuten-mobile', Lions:'belluna', Marines:'zozo'
+};
 let pitchLoads = {};
 let pitcherUsageRoles = {};
 let lastAction = '';
@@ -16,6 +21,7 @@ let gameEndReason = '';
 let pendingRunnerPlay = null;
 let openDockPanel = '';
 let dockProxyClick = false;
+let lastCalculationDetail = null;
 const pendingControlHistory = new WeakMap();
 const dockControlHistory = new WeakMap();
 
@@ -206,6 +212,29 @@ function createDockRunnerRows(container){
     row.querySelector('.dockRunnerSearch').onclick=()=>openPlayerSearch(source);
   }
 }
+function inferredParkId(){
+  const homeTeam=$('homeAway')?.value==='home'?TEAM_T:$('opponent')?.value;
+  return PRIMARY_PARK_BY_TEAM[homeTeam]||'';
+}
+function currentParkInfo(){
+  const setting=$('ballpark')?.value||'auto',id=setting==='auto'?inferredParkId():setting;
+  if(id==='neutral'||!id)return {id:'neutral',name:'球場補正なし',games:0,runsPerGame:statsSnapshot.parks?.leagueRunsPerGame||0,factor:1,setting};
+  const park=statsSnapshot.parks?.factors?.[id];
+  return park?{...park,setting}:{id,name:'球場補正なし',games:0,runsPerGame:0,factor:1,setting};
+}
+function createBallparkControl(shell){
+  const gamePanel=shell.querySelector('.gameDockPanel[data-dock-panel="game"]'),outButtons=shell.querySelector('.dockOutButtons');
+  if(!gamePanel||!outButtons)return;
+  const control=document.createElement('div');control.className='dockParkControl';
+  const label=document.createElement('label');label.htmlFor='ballpark';label.textContent='球場';
+  const select=document.createElement('select');select.id='ballpark';
+  const automatic=document.createElement('option');automatic.value='auto';automatic.textContent='自動（ホーム球団の本拠地）';select.appendChild(automatic);
+  const neutral=document.createElement('option');neutral.value='neutral';neutral.textContent='球場補正なし';select.appendChild(neutral);
+  for(const park of Object.values(statsSnapshot.parks?.factors||{})){
+    const option=document.createElement('option');option.value=park.id;option.textContent=park.name;select.appendChild(option);
+  }
+  control.append(label,select);gamePanel.insertBefore(control,outButtons.previousElementSibling);
+}
 function createGameDock(){
   const shell=document.createElement('div');shell.id='gameDock';shell.className='gameDockShell';shell.innerHTML=`
     <div class="gameDockInner">
@@ -238,7 +267,7 @@ function createGameDock(){
       <div class="gameDockPanel" data-dock-panel="runners" hidden><div class="dockPanelHeading">走者</div><div class="dockRunnerGrid" id="dockRunnerGrid"></div></div>
       <div class="gameDockPanel dockPlayersPanel" data-dock-panel="players" hidden><div class="dockPanelHeading">選手・投手</div><div id="dockPlayerControls"></div></div>
     </div>`;
-  document.body.appendChild(shell);
+  document.body.appendChild(shell);createBallparkControl(shell);
   $('gameDockSummary').onclick=()=>setDockPanel('game');
   document.querySelectorAll('.gameDockTab').forEach(button=>button.onclick=()=>setDockPanel(button.dataset.dockPanel));
   copySelectOptions($('inning'),$('dockInning'));mirrorDockValue($('dockInning'),$('inning'));mirrorDockValue($('dockTigersScore'),$('tigersScore'));mirrorDockValue($('dockOpponentScore'),$('oppScore'));
@@ -328,16 +357,54 @@ function applyFatigue(probs,player,team){
   for(const key of ['1B','2B','3B','HR','BB','HBP','K','OUT'])out[key]=(probs[key]||0)*factors[key];
   const total=Object.values(out).reduce((sum,value)=>sum+value,0)||1;for(const key in out)out[key]/=total;out.dpCond=probs.dpCond;return out;
 }
-const currentMatchupPredictionV09=currentMatchupPrediction;
-currentMatchupPrediction=function(){
-  const matchup=baseMatchupPrediction(),fatigued=applyFatigue(matchup.probs,matchup.pitcher,matchup.def);
-  return {...matchup,probs:adjustForCount(fatigued)};
-};
+function normalizeEventProbabilities(values,dpCond){
+  const total=['1B','2B','3B','HR','BB','HBP','K','OUT'].reduce((sum,key)=>sum+(values[key]||0),0)||1,out={};
+  for(const key of ['1B','2B','3B','HR','BB','HBP','K','OUT'])out[key]=Math.max(0,(values[key]||0)/total);
+  out.dpCond=dpCond;return out;
+}
+function applyEnvironmentFactor(probs,factor,kind){
+  if(!Number.isFinite(factor)||Math.abs(factor-1)<.0001)return {...probs};
+  const out={...probs};
+  if(kind==='park'){
+    out['1B']*=Math.pow(factor,.72);out['2B']*=Math.pow(factor,1.02);out['3B']*=Math.pow(factor,1.08);out.HR*=Math.pow(factor,1.2);
+  }else{
+    out['1B']*=factor;out['2B']*=Math.pow(factor,1.05);out['3B']*=Math.pow(factor,1.05);out.HR*=Math.pow(factor,1.15);
+    out.BB*=Math.pow(factor,.45);out.K/=Math.pow(factor,.35);
+  }
+  return normalizeEventProbabilities(out,probs.dpCond);
+}
+function matchupHandInfo(batter,pitcher){
+  const bats=batter?.bats||'',throws=pitcher?.throws||'';
+  if(!bats||!throws)return {code:'',factor:1,label:'左右情報なし'};
+  const code=`${bats}${throws}`,factor=Number(statsSnapshot.platoon?.factors?.[code]||1);
+  const handLabel={L:'左',R:'右',S:'両'};
+  return {code,factor,label:`${handLabel[bats]||'?'}打 vs ${handLabel[throws]||'?'}投`};
+}
+function calculationPrediction(){
+  const matchup=rawMatchupPrediction(),stages=[];
+  let probs={...matchup.probs};stages.push({key:'base',label:'基礎モデル',probs:{...probs}});
+  const evidence=learningEvidence(matchup.batter,matchup.pitcher),batterKey=learningPlayerKey(matchup.batter),pitcherKeyValue=learningPlayerKey(matchup.pitcher);
+  const direct=batterKey&&pitcherKeyValue?learningIndex?.byMatch.get(`${batterKey}>${pitcherKeyValue}`):null;
+  probs=applyObservedLearning(probs,matchup.batter,matchup.pitcher);stages.push({key:'learning',label:'観戦学習',probs:{...probs}});
+  const hands=matchupHandInfo(matchup.batter,matchup.pitcher);probs=applyEnvironmentFactor(probs,hands.factor,'platoon');stages.push({key:'platoon',label:'左右',probs:{...probs}});
+  const park=currentParkInfo();probs=applyEnvironmentFactor(probs,park.factor,'park');stages.push({key:'park',label:'球場',probs:{...probs}});
+  const fatigue=fatigueMultiplier(matchup.pitcher,matchup.def),load=currentPitchLoad(matchup.def,matchup.pitcher);probs=applyFatigue(probs,matchup.pitcher,matchup.def);stages.push({key:'fatigue',label:'投手疲労',probs:{...probs}});
+  probs=adjustForCount(probs);stages.push({key:'count',label:'カウント',probs:{...probs}});
+  lastCalculationDetail={
+    stages,
+    batter:{name:matchup.batter?displayName(matchup.batter):`${TEAM_NAME[matchup.team]} 野手平均`,pa:matchup.batter?.pa||0},
+    pitcher:{name:matchup.pitcher?displayName(matchup.pitcher):`${TEAM_NAME[matchup.def]} 投手平均`,bf:matchup.pitcher?.bf||0},
+    evidence:{weighted:evidence.n,direct:direct?.n||0},hands,park,fatigue,load,balls,strikes,
+    snapshotDate:statsSnapshot.snapshotDate||BUILTIN_SNAPSHOT_DATE,
+  };
+  return {...matchup,probs,calculation:lastCalculationDetail};
+}
+currentMatchupPrediction=function(){return calculationPrediction()};
 const simulateHalfV10=function(team,defTeam,startOut,startBases,startPos,pitcher,rng,walkoffFn,firstCount=null){
   let o=startOut,b=startBases,pos=startPos,runs=0;const lineup=lineupIds(team);let guard=0,firstPlate=true;
   while(o<3&&guard++<80){
     const batter=lineupBatter(team,lineup[pos%9])||model.byBat[team]?.[0]||null;
-    const learned=applyObservedLearning(eventProbs(batter,pitcher,defTeam),batter,pitcher),fatigued=applyFatigue(learned,pitcher,defTeam);
+    const learned=applyObservedLearning(eventProbs(batter,pitcher,defTeam),batter,pitcher),hands=matchupHandInfo(batter,pitcher),platoon=applyEnvironmentFactor(learned,hands.factor,'platoon'),parked=applyEnvironmentFactor(platoon,currentParkInfo().factor,'park'),fatigued=applyFatigue(parked,pitcher,defTeam);
     const probs=firstPlate&&firstCount?adjustForCount(fatigued,firstCount.balls,firstCount.strikes):fatigued;
     const event=pickEvent(probs,rng),result=applyEvent(event,b,o,rng,probs.dpCond);b=result.b;o=result.o;runs+=result.runs;pos=(pos+1)%9;firstPlate=false;
     if(walkoffFn&&result.runs>0&&walkoffFn(runs))break;
@@ -349,14 +416,49 @@ const initialCurrentMultiplierV09=initialCurrentMultiplier;
 initialCurrentMultiplier=function(team,defTeam){return initialCurrentMultiplierV09(team,defTeam)*fatigueMultiplier(currentPitcherFor(defTeam),defTeam)};
 const updatePredictionV09=updatePrediction;
 updatePrediction=function(){
-  updatePredictionV09();const team=currentFieldingTeam(),player=currentPitcherFor(team),multiplier=fatigueMultiplier(player,team);
+  updatePredictionV09();if(lastPrediction)lastPrediction.calculation=lastCalculationDetail;
+  const team=currentFieldingTeam(),player=currentPitcherFor(team),multiplier=fatigueMultiplier(player,team),hands=lastCalculationDetail?.hands,park=lastCalculationDetail?.park;
+  if(hands?.code&&$('predictionNote'))$('predictionNote').textContent+=` 左右 ${hands.label}（${hands.factor.toFixed(3)}倍）を反映。`;
+  if(park&&$('predictionNote'))$('predictionNote').textContent+=` 球場 ${park.name}（${park.factor.toFixed(3)}倍）を反映。`;
   if(multiplier>1&&$('predictionNote'))$('predictionNote').textContent+=` 投球数による疲労補正 ${((multiplier-1)*100).toFixed(1)}%相当を反映。`;
 };
+function totalOutProbability(probs){return (probs?.OUT||0)+(probs?.K||0)}
+function signedPoints(value){return `${value>=0?'+':''}${value.toFixed(1)}pt`}
+function stageDeltaSummary(before,after){
+  const outDelta=(totalOutProbability(after)-totalOutProbability(before))*100;
+  const events=[['単打','1B'],['二塁打','2B'],['三塁打','3B'],['本塁打','HR'],['四死球','walk']];
+  const deltas=events.map(([label,key])=>[label,key==='walk'?((after.BB||0)+(after.HBP||0)-(before.BB||0)-(before.HBP||0))*100:((after[key]||0)-(before[key]||0))*100]).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  return `総アウト ${signedPoints(outDelta)} / ${deltas[0][0]} ${signedPoints(deltas[0][1])}`;
+}
+function calculationDetailElement(detail){
+  const section=document.createElement('section');section.id='calculationDetail';section.className='calculationDetail';section.hidden=true;
+  const heading=document.createElement('h3');heading.textContent='計算要素';section.appendChild(heading);
+  const list=document.createElement('div');list.className='calculationFactorList';section.appendChild(list);
+  const add=(label,value,note)=>{const row=document.createElement('div');row.className='calculationFactorRow';const title=document.createElement('div');title.className='calculationFactorTitle';const name=document.createElement('strong');name.textContent=label;const delta=document.createElement('span');delta.textContent=value;title.append(name,delta);const description=document.createElement('p');description.textContent=note;row.append(title,description);list.appendChild(row)};
+  const stages=detail.stages||[],base=stages[0]?.probs||{};
+  add('基礎モデル',`総アウト ${pctText(totalOutProbability(base))}`,`${detail.batter.name} ${detail.batter.pa||0}打席（120打席分をリーグ平均へ縮約）× ${detail.pitcher.name} ${detail.pitcher.bf||0}打者（180打者分を縮約）`);
+  for(let index=1;index<stages.length;index++){
+    const stage=stages[index],before=stages[index-1].probs,note=stageDeltaSummary(before,stage.probs);let description='';
+    if(stage.key==='learning')description=`加重対象 ${detail.evidence.weighted.toFixed(1)}件、同一打者×投手 ${detail.evidence.direct}件。48打席分の基礎値を優先。`;
+    if(stage.key==='platoon')description=`${detail.hands.label}。公開された2025 MLB左右別wOBAの差を50%に縮約した ${detail.hands.factor.toFixed(3)}倍。NPB個人別の左右成績ではありません。`;
+    if(stage.key==='park')description=`${detail.park.name}。NPB公式試合結果 ${detail.park.games}試合、得点環境 ${detail.park.factor.toFixed(3)}倍（リーグ平均へ180試合縮約、最大±3%）。`;
+    if(stage.key==='fatigue')description=`現在 ${detail.load}球、役割別補正 ${detail.fatigue.toFixed(3)}倍。`;
+    if(stage.key==='count')description=`B${detail.balls}-S${detail.strikes}。四球・三振・インプレー到達率の保守的補正。`;
+    add(stage.label,note,description);
+  }
+  const source=document.createElement('p');source.className='calculationSource';source.innerHTML=`基礎データ ${detail.snapshotDate.replaceAll('-','/')}時点：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式個人成績</a>。球場：<a href="https://npb.jp/games/2026/" target="_blank" rel="noopener noreferrer">NPB公式試合結果</a>。左右の効果量：<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式公開集計</a>。`;
+  section.appendChild(source);return section;
+}
 const openProbabilityDetailV10=openProbabilityDetail;
 openProbabilityDetail=function(kind){
   openProbabilityDetailV10(kind);if(kind!=='pa'||!lastPrediction?.probs)return;
   const outTotal=(lastPrediction.probs.OUT||0)+(lastPrediction.probs.K||0),total=document.createElement('div');total.id='dialogOutTotal';total.className='dialogOutTotal';
   const label=document.createElement('span'),value=document.createElement('strong');label.textContent='トータルアウト確率';value.textContent=pctText(outTotal);total.append(label,value);$('dialogBody').prepend(total);
+  if(lastPrediction.calculation){
+    const toggle=document.createElement('button');toggle.type='button';toggle.className='calculationDetailToggle';toggle.textContent='計算要素の詳細';toggle.setAttribute('aria-expanded','false');
+    const section=calculationDetailElement(lastPrediction.calculation);toggle.onclick=()=>{section.hidden=!section.hidden;toggle.setAttribute('aria-expanded',String(!section.hidden));toggle.textContent=section.hidden?'計算要素の詳細':'計算要素を閉じる'};
+    $('dialogBody').append(toggle,section);
+  }
 };
 
 function ensureObservationShape(){
@@ -563,17 +665,18 @@ refreshPlayerUI=function(){refreshPlayerUIV09();decorateSearchSelects();updateFi
 const updateStatusV09=updateStatus;
 updateStatus=function(){
   updateStatusV09();const count=Object.values(rosterSnapshot.rosters||{}).reduce((sum,players)=>sum+players.length,0),date=rosterSnapshot.snapshotDate?.replaceAll('-','/');
+  if(statsSnapshot.bat?.length&&$('dataStatus'))$('dataStatus').innerHTML+=`<br><strong>公式個人成績 ${statsSnapshot.snapshotDate.replaceAll('-','/')}時点</strong>：野手 ${statsSnapshot.bat.length}人・投手 ${statsSnapshot.pit.length}人。左右・球場補正を含む静的スナップショット。`;
   if(count&&$('dataStatus'))$('dataStatus').innerHTML+=`<br>NPB現役支配下名簿 ${count}人（${date}確認）。未収録成績は球団平均。`;
 };
 
 const snapshotV09=snapshot;
 function copiedOpponentLineups(){return Object.fromEntries(Object.entries(savedOpponentLineups||{}).map(([team,lineup])=>[team,Array.isArray(lineup)?[...lineup]:lineup]))}
-snapshot=function(){return {...snapshotV09(),stealLearningLength:observedLearning?.steals?.length||0,opponent:$('opponent').value,homeAway:$('homeAway').value,pitchLoads:{...pitchLoads},pitcherUsageRoles:{...pitcherUsageRoles},lastAction,fieldOpen:$('fieldStateDetails').open,gameEnded,gameEndReason,savedOpponentLineups:copiedOpponentLineups()}};
+snapshot=function(){return {...snapshotV09(),stealLearningLength:observedLearning?.steals?.length||0,opponent:$('opponent').value,homeAway:$('homeAway').value,ballpark:$('ballpark')?.value||'auto',pitchLoads:{...pitchLoads},pitcherUsageRoles:{...pitcherUsageRoles},lastAction,fieldOpen:$('fieldStateDetails').open,gameEnded,gameEndReason,savedOpponentLineups:copiedOpponentLineups()}};
 const restoreSnapshotV09=restoreSnapshot;
 restoreSnapshot=function(state){
   if(state.savedOpponentLineups&&typeof state.savedOpponentLineups==='object'){savedOpponentLineups=Object.fromEntries(Object.entries(state.savedOpponentLineups).map(([team,lineup])=>[team,Array.isArray(lineup)?[...lineup]:lineup]));persistOpponentLineups()}
   if(state.opponent&&state.opponent!==$('opponent').value){$('opponent').value=state.opponent;refreshPlayerUI()}
-  if(state.homeAway)$('homeAway').value=state.homeAway;pitchLoads={...(state.pitchLoads||pitchLoads)};pitcherUsageRoles={...(state.pitcherUsageRoles||pitcherUsageRoles)};gameEnded=Boolean(state.gameEnded);gameEndReason=state.gameEndReason||'';restoreSnapshotV09(state);
+  if(state.homeAway)$('homeAway').value=state.homeAway;if(state.ballpark&&$('ballpark'))$('ballpark').value=state.ballpark;pitchLoads={...(state.pitchLoads||pitchLoads)};pitcherUsageRoles={...(state.pitcherUsageRoles||pitcherUsageRoles)};gameEnded=Boolean(state.gameEnded);gameEndReason=state.gameEndReason||'';restoreSnapshotV09(state);
   if(Number.isInteger(state.stealLearningLength)&&observedLearning?.steals?.length>state.stealLearningLength){observedLearning.steals=observedLearning.steals.slice(0,state.stealLearningLength);saveObservedLearning()}
   if(typeof state.fieldOpen==='boolean')$('fieldStateDetails').open=state.fieldOpen;setLastAction(state.lastAction||'');if(gameEnded)setTimeout(showGameResult,0);else closeGameResult()
 };
@@ -610,7 +713,7 @@ function commitControlHistory(control){
   const before=pendingControlHistory.get(control);pendingControlHistory.delete(control);if(before&&historyStateKey(before)!==historyStateKey(snapshot()))appendHistoryState(before,true);
 }
 function setupStatefulControlHistory(){
-  const selectIds=['opponent','homeAway','inning','tigersBatterPos','oppBatterPos','tigersPitcher','oppPitcher','pitcherFatigue','runner1','runner2','runner3',...Array.from({length:9},(_,index)=>`tLine${index}`),...Array.from({length:9},(_,index)=>`oLine${index}`)];
+  const selectIds=['opponent','homeAway','ballpark','inning','tigersBatterPos','oppBatterPos','tigersPitcher','oppPitcher','pitcherFatigue','runner1','runner2','runner3',...Array.from({length:9},(_,index)=>`tLine${index}`),...Array.from({length:9},(_,index)=>`oLine${index}`)];
   for(const id of selectIds){const control=$(id);if(!control)continue;control.addEventListener('focusin',()=>captureControlHistory(control));control.addEventListener('pointerdown',()=>captureControlHistory(control));control.addEventListener('keydown',()=>captureControlHistory(control));control.addEventListener('change',()=>commitControlHistory(control))}
   for(const id of ['tigersScore','oppScore']){const control=$(id);control.addEventListener('focusin',()=>captureControlHistory(control));control.addEventListener('pointerdown',()=>captureControlHistory(control));control.addEventListener('keydown',()=>captureControlHistory(control));control.addEventListener('change',()=>commitControlHistory(control))}
 }
@@ -621,7 +724,7 @@ function restoreGameState(){
   try{
     const saved=JSON.parse(localStorage.getItem(GAME_STORAGE)||'null'),state=saved?.state;if(saved?.version!==1||!state)return false;
     if(state.savedOpponentLineups&&typeof state.savedOpponentLineups==='object'){savedOpponentLineups=Object.fromEntries(Object.entries(state.savedOpponentLineups).map(([team,lineup])=>[team,Array.isArray(lineup)?[...lineup]:lineup]));persistOpponentLineups()}
-    if(state.opponent&&[...$('opponent').options].some(option=>option.value===state.opponent))$('opponent').value=state.opponent;if(state.homeAway)$('homeAway').value=state.homeAway;refreshPlayerUI();
+    if(state.opponent&&[...$('opponent').options].some(option=>option.value===state.opponent))$('opponent').value=state.opponent;if(state.homeAway)$('homeAway').value=state.homeAway;if(state.ballpark&&$('ballpark'))$('ballpark').value=state.ballpark;refreshPlayerUI();
     half=state.half==='bottom'?'bottom':'top';outs=clamp(num(state.outs),0,2);balls=clamp(num(state.balls),0,3);strikes=clamp(num(state.strikes),0,2);baseRunners={1:state.baseRunners?.[1]||'',2:state.baseRunners?.[2]||'',3:state.baseRunners?.[3]||''};bases=[1,2,3].reduce((value,base)=>value|(baseRunners[base]?baseBit(base):0),0);
     $('inning').value=String(clamp(num(state.inning)||1,1,12));$('tigersScore').value=String(Math.max(0,num(state.tigersScore)));$('oppScore').value=String(Math.max(0,num(state.oppScore)));$('tigersBatterPos').value=String(clamp(num(state.tPos),0,8));$('oppBatterPos').value=String(clamp(num(state.oPos),0,8));
     (state.tLine||[]).forEach((id,index)=>{const select=$(`tLine${index}`);if(select&&[...select.options].some(option=>option.value===id))select.value=id});(state.oLine||[]).forEach((id,index)=>{const select=$(`oLine${index}`);if(select&&[...select.options].some(option=>option.value===id))select.value=id});
@@ -646,6 +749,7 @@ $('undoBtn').onclick=undoLast;$('redoBtn').onclick=redoLast;$('applyPinchHitter'
 document.querySelectorAll('[data-advance-runner]').forEach(button=>button.onclick=()=>advanceRunner(Number(button.dataset.advanceRunner)));
 document.querySelectorAll('[data-steal-runner]').forEach(button=>button.onclick=()=>openSteal(Number(button.dataset.stealRunner)));
 $('pitcherFatigue').addEventListener('change',event=>{const team=currentFieldingTeam(),player=currentPitcherFor(team);pitchLoads[pitcherKey(team,player)]=Number(event.target.value);setLastAction(`${displayName(player)||TEAM_NAME[team]+'投手平均'}の投球数を${event.target.selectedOptions[0].textContent}に変更`);scheduleUpdate();closeGameDock()});
+$('ballpark')?.addEventListener('change',()=>{const park=currentParkInfo();setLastAction(`球場を${park.name}に変更`);scheduleUpdate();closeGameDock()});
 $('fieldStateDetails').addEventListener('toggle',saveGameState);
 for(const id of ['tigersPitcher','oppPitcher'])$(id).addEventListener('change',()=>{const team=id==='tigersPitcher'?TEAM_T:$('opponent').value,player=currentPitcherFor(team),key=pitcherKey(team,player);if(pitchLoads[key]===undefined)pitchLoads[key]=0;updateFieldState();setLastAction(`${TEAM_NAME[team]}の投手を${displayName(player)||'投手平均'}に変更`)});
 for(const base of [1,2,3])$('runner'+base).addEventListener('change',()=>setLastAction(`${base}塁走者を${runnerLabel(battingTeam($('homeAway').value,half),baseRunners[base])||'なし'}に変更`));
@@ -665,7 +769,7 @@ $('nextHalf').addEventListener('click',()=>{if(gameEnded)setLastAction('試合�
 document.addEventListener('click',event=>{const button=event.target.closest('button');if(!button)return;button.classList.remove('pressedFeedback');void button.offsetWidth;button.classList.add('pressedFeedback');setTimeout(()=>button.classList.remove('pressedFeedback'),240)});
 window.addEventListener('pagehide',()=>{try{const state=snapshot();delete state.learningLength;delete state.stealLearningLength;localStorage.setItem(GAME_STORAGE,JSON.stringify({version:1,savedAt:Date.now(),state}))}catch(e){}});
 
-const footer=document.querySelector('footer');if(footer){const note=document.createElement('div');note.className='rosterSourceNote';note.innerHTML=`現役支配下選手名：<a href="https://npb.jp/bis/players/active/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 現役選手一覧</a>（${rosterSnapshot.snapshotDate?.replaceAll('-','/')}確認）の静的スナップショット。未収録の個人成績は同球団平均を使用。<br>投手疲労補正：<a href="https://www.mlb.com/glossary/standard-stats/number-of-pitches" target="_blank" rel="noopener noreferrer">MLB Pitch Count</a>、<a href="https://www.mlb.com/glossary/miscellaneous/third-time-through-the-order-penalty" target="_blank" rel="noopener noreferrer">Third Time Through the Order Penalty</a>、公開研究を基にした保守的な役割別段階補正。`;footer.appendChild(note)}
+const footer=document.querySelector('footer');if(footer){const note=document.createElement('div');note.className='rosterSourceNote';note.innerHTML=`公式個人成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB.jp 2026個人成績</a>（${statsSnapshot.snapshotDate?.replaceAll('-','/')}時点）の静的スナップショット。通常更新は前回基準日以降の<a href="https://npb.jp/bis/2026/games/" target="_blank" rel="noopener noreferrer">公式試合結果</a>だけを試合ID単位で追加し、ページ表示時の外部通信は行いません。<br>現役支配下選手名：<a href="https://npb.jp/bis/players/active/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 現役選手一覧</a>。未収録の個人成績は同球団平均を使用。<br>左右補正：NPB公式の投打情報と<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式の2025左右別wOBA公開集計</a>を50%に縮約。球場補正：2024年以降のNPB公式試合結果を180試合分リーグ平均へ縮約し最大±3%。<br>投手疲労補正：<a href="https://www.mlb.com/glossary/standard-stats/number-of-pitches" target="_blank" rel="noopener noreferrer">MLB Pitch Count</a>、<a href="https://www.mlb.com/glossary/miscellaneous/third-time-through-the-order-penalty" target="_blank" rel="noopener noreferrer">Third Time Through the Order Penalty</a>を基にした保守的な役割別段階補正。`;footer.appendChild(note)}
 
 refreshPlayerUI();decorateSearchSelects();updateStatus();restoreGameState();updateLearningUI();updateFieldState();update();
 })();

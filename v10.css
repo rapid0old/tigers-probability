@@ -1,4 +1,5 @@
 :root{--sbo-strike:#d3b93e;--sbo-ball:#4f9a66;--sbo-out:#c65d62}
+.probDialog{max-height:calc(100dvh - 24px);overflow:auto}
 button{transition:transform .08s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
 button:active{transform:scale(.97);background:#343439;border-color:#76767e}
 button.pressedFeedback{background:var(--accent);border-color:var(--accent);color:#111;box-shadow:0 0 0 3px rgba(242,210,27,.18)}
@@ -38,6 +39,9 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .dockScoreGrid{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end;margin:12px 0}
 .dockScoreGrid input,.gameDockPanel select{border-radius:7px;padding:10px;min-height:44px}
 .dockScoreDash{font-size:24px;font-weight:800;padding-bottom:8px}
+.dockParkControl{display:grid;grid-template-columns:minmax(72px,.35fr) minmax(0,1fr);align-items:center;gap:10px;margin:10px 0}
+.dockParkControl label{margin:0}
+.dockParkControl select{min-width:0;width:100%}
 .dockOutButtons{max-width:360px}
 .dockCountGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dockBallButtons{grid-template-columns:repeat(4,1fr)}
@@ -107,6 +111,18 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .runnerAdvanceActions button{min-height:46px}
 .dialogOutTotal{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 0 10px;padding:10px 12px;border-left:3px solid var(--accent);background:#111114;color:#d7d7db}
 .dialogOutTotal strong{color:var(--accent);font-size:18px}
+.calculationDetailToggle{width:100%;min-height:44px;margin-top:12px;border-color:#5d5d64;background:#1b1b1f;color:var(--text)}
+.calculationDetailToggle[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+.calculationDetail{margin-top:14px;border-top:1px solid var(--line);padding-top:14px;text-align:left}
+.calculationDetail h3{margin:0 0 10px;color:var(--accent);font-size:15px;letter-spacing:0}
+.calculationFactorList{display:grid;gap:0}
+.calculationFactorRow{padding:11px 0;border-bottom:1px solid var(--line)}
+.calculationFactorTitle{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;font-size:13px}
+.calculationFactorTitle strong{color:var(--text)}
+.calculationFactorTitle span{color:var(--accent);font-weight:850;text-align:right}
+.calculationFactorRow p{margin:5px 0 0;color:var(--muted);font-size:11px;line-height:1.55}
+.calculationSource{margin:12px 0 0;color:var(--muted);font-size:10px;line-height:1.6}
+.calculationSource a{color:#d7c767}
 .gameResultDialog{text-align:center;padding:24px 18px}
 .gameResultEyebrow{color:var(--muted);font-size:12px}
 .gameResultMessage{margin:12px 0 8px;color:var(--accent);font-size:32px;font-weight:900;line-height:1.25}
@@ -128,6 +144,7 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
   .dockPanelHeading{margin-bottom:8px}
   .dockGameGrid,.dockCountGrid{grid-template-columns:1fr}
   .dockPlayGrid{grid-template-columns:repeat(3,1fr)}
+  .dockParkControl{grid-template-columns:72px minmax(0,1fr);margin:8px 0}
   .dockRunnerGrid{grid-template-columns:1fr}
   .matchupPanel{grid-template-columns:1fr}
   .fatigueControl{grid-column:auto;grid-template-columns:1fr}
@@ -151,4 +168,6 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 @media(max-width:360px){
   .gameDockTab{font-size:10px}
   .runnerAdvanceRow{grid-template-columns:1fr}
+  .calculationFactorTitle{display:block}
+  .calculationFactorTitle span{display:block;margin-top:3px;text-align:left}
 }
