@@ -13,7 +13,11 @@ let stealBase = 0;
 let redoHistory = [];
 let gameEnded = false;
 let gameEndReason = '';
+let pendingRunnerPlay = null;
+let openDockPanel = '';
+let dockProxyClick = false;
 const pendingControlHistory = new WeakMap();
+const dockControlHistory = new WeakMap();
 
 function normalizedName(value){
   return String(value||'').normalize('NFKC').replace(/[\s　・.]/g,'').replace(/髙/g,'高').replace(/﨑/g,'崎').toLowerCase();
@@ -116,7 +120,7 @@ function createFieldStateUI(){
   const last=document.createElement('div');last.id='lastActionStatus';last.className='lastActionStatus';last.setAttribute('aria-live','polite');last.textContent='直前動作：なし';
   document.querySelector('.playGrid').after(last);
   const undo=$('undoBtn');
-  for(const [play,label] of [['DP','併殺打'],['E','エラー']]){const button=document.createElement('button');button.className='playBtn';button.dataset.play=play;button.textContent=label;undo.before(button)}
+  for(const [play,label] of [['ADV','進塁打'],['SF','犠牲フライ'],['DP','併殺打'],['E','エラー']]){const button=document.createElement('button');button.className='playBtn';button.dataset.play=play;button.textContent=label;undo.before(button)}
   const historyDock=document.createElement('div');historyDock.id='historyDock';historyDock.className='historyDock';historyDock.setAttribute('aria-label','入力履歴');
   undo.textContent='← 戻る';undo.className='historyControl historyBack';undo.setAttribute('aria-label','ひとつ前の入力に戻る');
   const redo=document.createElement('button');redo.id='redoBtn';redo.type='button';redo.className='historyControl historyForward';redo.textContent='進む →';redo.setAttribute('aria-label','取り消した入力をやり直す');redo.disabled=true;
@@ -153,6 +157,109 @@ function createGameResultDialog(){
   $('startNextGame').onclick=startNextGame;
   dialog.addEventListener('cancel',event=>{event.preventDefault();returnToFinishedGame()});
 }
+function createRunnerAdvanceDialog(){
+  const dialog=document.createElement('dialog');dialog.id='runnerAdvanceDialog';dialog.className='runnerAdvanceDialog';dialog.innerHTML=`
+    <div class="dialogHeader"><strong id="runnerAdvanceTitle">走者の行き先</strong><button type="button" id="closeRunnerAdvance" aria-label="閉じる">×</button></div>
+    <div class="runnerAdvanceLead" id="runnerAdvanceLead">打席結果に合わせて走者の行き先を選択してください。</div>
+    <div class="runnerAdvanceRows" id="runnerAdvanceRows"></div>
+    <div class="runnerAdvancePreview" id="runnerAdvancePreview" aria-live="polite"></div>
+    <div class="runnerAdvanceActions"><button type="button" class="secondary" id="cancelRunnerAdvance">キャンセル</button><button type="button" class="primary" id="confirmRunnerAdvance">この結果で確定</button></div>`;
+  document.body.appendChild(dialog);
+  const cancel=()=>{pendingRunnerPlay=null;if(dialog.open)dialog.close()};
+  $('closeRunnerAdvance').onclick=$('cancelRunnerAdvance').onclick=cancel;
+  $('confirmRunnerAdvance').onclick=confirmRunnerAdvance;
+  dialog.addEventListener('cancel',event=>{event.preventDefault();cancel()});
+}
+
+function dockShortTeam(team){
+  return {Tigers:'阪神',Giants:'巨人',BayStars:'DeNA',Carp:'広島',Dragons:'中日',Swallows:'ヤクルト',Hawks:'ソフトバンク',Fighters:'日本ハム',Buffaloes:'オリックス',Eagles:'楽天',Lions:'西武',Marines:'ロッテ'}[team]||TEAM_NAME[team]||team;
+}
+function dockPanelButton(panel){return document.querySelector(`.gameDockTab[data-dock-panel="${panel}"]`)}
+function setDockPanel(panel=''){
+  openDockPanel=openDockPanel===panel?'':panel;
+  document.querySelectorAll('.gameDockPanel').forEach(item=>{item.hidden=item.dataset.dockPanel!==openDockPanel});
+  document.querySelectorAll('.gameDockTab').forEach(button=>{const active=button.dataset.dockPanel===openDockPanel;button.classList.toggle('active',active);button.setAttribute('aria-expanded',String(active))});
+  if(openDockPanel==='runners')syncDockRunners();
+}
+function closeGameDock(){if(openDockPanel)setDockPanel(openDockPanel)}
+function clickDockSource(selector){dockProxyClick=true;try{document.querySelector(selector)?.click()}finally{dockProxyClick=false}}
+function copySelectOptions(source,target){
+  const current=target.value;target.replaceChildren(...[...source.options].map(option=>option.cloneNode(true)));target.value=[...target.options].some(option=>option.value===source.value)?source.value:current;
+}
+function mirrorDockValue(proxy,source){
+  proxy.addEventListener('focusin',()=>dockControlHistory.set(proxy,snapshot()));
+  proxy.addEventListener('input',()=>{source.value=proxy.value;source.dispatchEvent(new Event('input',{bubbles:true}))});
+  proxy.addEventListener('change',()=>{
+    const before=dockControlHistory.get(proxy)||snapshot();dockControlHistory.delete(proxy);appendHistoryState(before,true);resumeFinishedGameForEdit();source.value=proxy.value;source.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+}
+function createDockRunnerRows(container){
+  for(const base of [1,2,3]){
+    const row=document.createElement('div');row.className='dockRunnerRow';row.innerHTML=`
+      <label for="dockRunner${base}">${base}塁走者</label>
+      <div class="dockRunnerSelect"><select id="dockRunner${base}"></select><button type="button" class="dockRunnerSearch" aria-label="${base}塁走者を検索">検索</button></div>
+      <div class="dockRunnerActions"><button type="button" data-advance-runner="${base}">進塁</button><button type="button" data-steal-runner="${base}">盗塁</button></div>`;
+    container.appendChild(row);
+    const proxy=row.querySelector('select'),source=$('runner'+base);
+    proxy.addEventListener('change',()=>{pushHistory();source.value=proxy.value;source.dispatchEvent(new Event('change',{bubbles:true}))});
+    row.querySelector('.dockRunnerSearch').onclick=()=>openPlayerSearch(source);
+  }
+}
+function createGameDock(){
+  const shell=document.createElement('div');shell.id='gameDock';shell.className='gameDockShell';shell.innerHTML=`
+    <div class="gameDockInner">
+      <button type="button" class="gameDockSummary" id="gameDockSummary" aria-label="試合情報と試合操作を開く">
+        <span class="gameDockPrimary"><strong id="dockInningText">1回表</strong><span id="dockScoreText">阪神 0－0 巨人</span><span id="dockOutText">0アウト</span></span>
+        <span class="gameDockSecondary"><span id="dockMatchupText">1番 打者 vs 投手</span><span id="dockSituationText">B0-S0｜走者なし</span></span>
+      </button>
+      <div class="gameDockTabs" role="toolbar" aria-label="試合入力">
+        <button type="button" class="gameDockTab" data-dock-panel="game" aria-expanded="false">試合</button>
+        <button type="button" class="gameDockTab" data-dock-panel="count" aria-expanded="false">カウント</button>
+        <button type="button" class="gameDockTab" data-dock-panel="result" aria-expanded="false">打席結果</button>
+        <button type="button" class="gameDockTab" data-dock-panel="runners" aria-expanded="false">走者</button>
+        <button type="button" class="gameDockTab" data-dock-panel="players" aria-expanded="false">選手・投手</button>
+      </div>
+      <div class="gameDockPanel" data-dock-panel="game" hidden>
+        <div class="dockPanelHeading">試合</div>
+        <div class="dockGameGrid"><div><label for="dockInning">イニング</label><select id="dockInning"></select></div><div class="dockHalfControl"><label>表・裏</label><div class="dockSegment"><button type="button" id="dockTop">表</button><button type="button" id="dockBottom">裏</button><button type="button" id="dockNextHalf">次の半回</button></div></div></div>
+        <div class="dockScoreGrid"><div><label for="dockTigersScore">阪神</label><input id="dockTigersScore" type="number" inputmode="numeric" min="0" max="99"></div><div class="dockScoreDash">－</div><div><label for="dockOpponentScore">相手</label><input id="dockOpponentScore" type="number" inputmode="numeric" min="0" max="99"></div></div>
+        <label>アウト</label><div class="dockSegment dockOutButtons"><button type="button" data-dock-out="0">0</button><button type="button" data-dock-out="1">1</button><button type="button" data-dock-out="2">2</button></div>
+      </div>
+      <div class="gameDockPanel" data-dock-panel="count" hidden>
+        <div class="dockPanelHeading">ボール・ストライク</div>
+        <div class="dockCountGrid"><div><label>ボール</label><div class="dockSegment dockBallButtons"><button type="button" data-dock-ball="0">0</button><button type="button" data-dock-ball="1">1</button><button type="button" data-dock-ball="2">2</button><button type="button" data-dock-ball="3">3</button></div></div><div><label>ストライク</label><div class="dockSegment dockStrikeButtons"><button type="button" data-dock-strike="0">0</button><button type="button" data-dock-strike="1">1</button><button type="button" data-dock-strike="2">2</button></div></div></div>
+      </div>
+      <div class="gameDockPanel" data-dock-panel="result" hidden><div class="dockPanelHeading">打席結果</div><div class="dockPlayGrid" id="dockPlayGrid"></div></div>
+      <div class="gameDockPanel" data-dock-panel="runners" hidden><div class="dockPanelHeading">走者</div><div class="dockRunnerGrid" id="dockRunnerGrid"></div></div>
+      <div class="gameDockPanel dockPlayersPanel" data-dock-panel="players" hidden><div class="dockPanelHeading">選手・投手</div><div id="dockPlayerControls"></div></div>
+    </div>`;
+  document.body.appendChild(shell);
+  $('gameDockSummary').onclick=()=>setDockPanel('game');
+  document.querySelectorAll('.gameDockTab').forEach(button=>button.onclick=()=>setDockPanel(button.dataset.dockPanel));
+  copySelectOptions($('inning'),$('dockInning'));mirrorDockValue($('dockInning'),$('inning'));mirrorDockValue($('dockTigersScore'),$('tigersScore'));mirrorDockValue($('dockOpponentScore'),$('oppScore'));
+  $('dockTop').onclick=()=>clickDockSource('#topBtn');$('dockBottom').onclick=()=>clickDockSource('#botBtn');$('dockNextHalf').onclick=()=>{clickDockSource('#nextHalf');closeGameDock()};
+  document.querySelectorAll('[data-dock-out]').forEach(button=>button.onclick=()=>clickDockSource(`.outBtn[data-o="${button.dataset.dockOut}"]`));
+  document.querySelectorAll('[data-dock-ball]').forEach(button=>button.onclick=()=>clickDockSource(`.ballBtn[data-count="${button.dataset.dockBall}"]`));
+  document.querySelectorAll('[data-dock-strike]').forEach(button=>button.onclick=()=>clickDockSource(`.strikeBtn[data-count="${button.dataset.dockStrike}"]`));
+  for(const [play,label] of [['OUT','凡退'],['K','三振'],['ADV','進塁打'],['SF','犠牲フライ'],['SAC','送りバント'],['BB','四死球'],['1B','単打'],['2B','二塁打'],['3B','三塁打'],['HR','本塁打'],['DP','併殺打'],['E','エラー']]){const button=document.createElement('button');button.type='button';button.className='playBtn';button.dataset.play=play;button.textContent=label;$('dockPlayGrid').appendChild(button)}
+  createDockRunnerRows($('dockRunnerGrid'));
+  const playerControls=$('dockPlayerControls'),fatigue=document.querySelector('.fatigueControl'),substitution=document.querySelector('.substitutionPanel');
+  if(fatigue)playerControls.appendChild(fatigue);if(substitution){substitution.open=true;playerControls.appendChild(substitution)}
+  document.addEventListener('click',event=>{if(dockProxyClick)return;if(openDockPanel&&!shell.contains(event.target)&&!event.target.closest('dialog'))closeGameDock()});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&openDockPanel)closeGameDock()});
+}
+function syncDockRunners(){
+  for(const base of [1,2,3]){const source=$('runner'+base),target=$('dockRunner'+base);if(source&&target)copySelectOptions(source,target)}
+}
+function syncGameDock(){
+  if(!$('gameDock'))return;const opponent=$('opponent').value,batting=battingTeam($('homeAway').value,half),fielding=fieldingTeam($('homeAway').value,half),batter=currentBatterFor(batting),pitcher=currentPitcherFor(fielding),order=currentPos(batting)%9+1;
+  $('dockInningText').textContent=`${$('inning').value}回${half==='top'?'表':'裏'}`;$('dockScoreText').textContent=`阪神 ${teamScore(TEAM_T)}－${teamScore(opponent)} ${dockShortTeam(opponent)}`;$('dockOutText').textContent=`${outs}アウト`;
+  $('dockMatchupText').textContent=`${order}番 ${displayLineupName(batting,lineupIds(batting)[currentPos(batting)%9])} vs ${pitcher?displayName(pitcher):`${dockShortTeam(fielding)}投手平均`}`;
+  const runnerText=[1,2,3].filter(base=>baseRunners[base]).map(base=>`${base===1?'一':base===2?'二':'三'}:${runnerLabel(batting,baseRunners[base])}`).join(' ');$('dockSituationText').textContent=`B${balls}-S${strikes}｜${runnerText||'走者なし'}`;
+  $('dockInning').value=$('inning').value;$('dockTigersScore').value=$('tigersScore').value;$('dockOpponentScore').value=$('oppScore').value;
+  $('dockTop').classList.toggle('active',half==='top');$('dockBottom').classList.toggle('active',half==='bottom');document.querySelectorAll('[data-dock-out]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockOut)===outs));document.querySelectorAll('[data-dock-ball]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockBall)===balls));document.querySelectorAll('[data-dock-strike]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockStrike)===strikes));
+  if(openDockPanel==='runners')syncDockRunners();
+}
 function selectLabel(select){
   const parent=select.parentElement;
   return parent?.querySelector('label')?.textContent||select.closest('.lineupGrid')?.previousElementSibling?.textContent||'選手';
@@ -187,6 +294,8 @@ createFieldStateUI();
 createSearchDialog();
 createStealDialog();
 createGameResultDialog();
+createRunnerAdvanceDialog();
+createGameDock();
 
 function pitcherKey(team,player=currentPitcherFor(team)){return `${team}|${player?.id||AVG_PITCHER_ID}`}
 function currentFieldingTeam(){return fieldingTeam($('homeAway').value,half)}
@@ -246,7 +355,7 @@ function ensureObservationShape(){
   if(!Array.isArray(observedLearning.steals))observedLearning.steals=[];
 }
 blankObservedLearning=function(){return {version:1,baselineKey:currentBaselineKey(),startedAt:Date.now(),enabled:true,capture:true,entries:[],steals:[]}};
-learningOutcome=function(play){return play==='DP'?'OUT':LEARNING_EVENTS.includes(play)?play:null};
+learningOutcome=function(play){return play==='DP'||play==='ADV'?'OUT':LEARNING_EVENTS.includes(play)?play:null};
 recordPlateObservation=function(play,matchup){
   if(!observedLearning?.capture)return;const now=Date.now();
   observedLearning.entries.push({id:`${now}-${Math.random().toString(36).slice(2,8)}`,recordedAt:now,gameDate:$('learningGameDate').value||localDateValue(),team:matchup.team,defTeam:matchup.def,batterKey:learningPlayerKey(matchup.batter),pitcherKey:learningPlayerKey(matchup.pitcher),batterName:matchup.batter?displayName(matchup.batter):'',pitcherName:matchup.pitcher?displayName(matchup.pitcher):'',result:play,outcome:learningOutcome(play)});
@@ -289,7 +398,7 @@ runnerSpeedFactor=function(team){
   return clamp(1+impact,.94,1.06);
 };
 
-function actionLabel(play){return {OUT:'凡退',K:'三振',SAC:'送りバント',BB:'四死球','1B':'単打','2B':'二塁打','3B':'三塁打',HR:'本塁打',DP:'併殺打',E:'エラー'}[play]||play}
+function actionLabel(play){return {OUT:'凡退',K:'三振',ADV:'進塁打',SF:'犠牲フライ',SAC:'送りバント',BB:'四死球','1B':'単打','2B':'二塁打','3B':'三塁打',HR:'本塁打',DP:'併殺打',E:'エラー'}[play]||play}
 function teamScore(team){return Math.max(0,num($(team===TEAM_T?'tigersScore':'oppScore').value))}
 function homeTeam(){return $('homeAway').value==='home'?TEAM_T:$('opponent').value}
 function awayTeam(){return homeTeam()===TEAM_T?$('opponent').value:TEAM_T}
@@ -333,21 +442,75 @@ function startNextGame(){
   history=[];redoHistory=[];syncHistoryControls();setLastAction('次の試合を開始');scheduleUpdate();
 }
 
-applyPlateResult=function(play){
-  const matchup=rawMatchupPrediction();pushHistory();recordPlateObservation(play,matchup);
-  const team=battingTeam($('homeAway').value,half),r={1:baseRunners[1]||'',2:baseRunners[2]||'',3:baseRunners[3]||''};let next={...r},scored=0;const batter=batterRunnerId(team);
+function playNeedsRunnerChoice(play){return ['1B','2B','E','ADV','SF','SAC'].includes(play)&&[1,2,3].some(base=>baseRunners[base])}
+function batterDestination(play){return play==='1B'||play==='E'?1:play==='2B'?2:0}
+function runnerDestinationOptions(play,fromBase){
+  const batterBase=batterDestination(play),minimum=batterBase&&fromBase<=batterBase?batterBase+1:fromBase,options=[];
+  for(let destination=minimum;destination<=4;destination++)options.push(destination);return options;
+}
+function defaultRunnerDestination(play,fromBase){
+  if(play==='SF')return fromBase===3?4:fromBase;
+  const advance=play==='2B'?2:1,options=runnerDestinationOptions(play,fromBase),preferred=Math.min(4,fromBase+advance);return options.includes(preferred)?preferred:options[0];
+}
+function destinationLabel(destination,fromBase){return destination===4?'生還':destination===fromBase?'留まる':`${destination}塁`}
+function selectedRunnerDestinations(){
+  return Object.fromEntries([...$('runnerAdvanceRows').querySelectorAll('select[data-runner-from]')].map(select=>[Number(select.dataset.runnerFrom),Number(select.value)]));
+}
+function validateRunnerDestinations(play,destinations,showMessage=true){
+  const occupied=new Set(),batterBase=batterDestination(play);if(batterBase)occupied.add(batterBase);
+  for(const base of [1,2,3]){
+    if(!pendingRunnerPlay?.runners[base])continue;const destination=destinations[base];
+    if(destination<4&&occupied.has(destination)){if(showMessage)toast(`${destination}塁に走者が重なります`);return false}if(destination<4)occupied.add(destination);
+  }
+  const active=[1,2,3].filter(base=>pendingRunnerPlay?.runners[base]);
+  for(let index=0;index<active.length-1;index++){
+    const trailing=destinations[active[index]],ahead=destinations[active[index+1]];
+    if(trailing>ahead&&ahead<4){if(showMessage)toast('前の走者を追い越す配置にはできません');return false}
+  }
+  return true;
+}
+function runnerMovePreview(){
+  if(!pendingRunnerPlay)return;const destinations=selectedRunnerDestinations(),valid=validateRunnerDestinations(pendingRunnerPlay.play,destinations,false),team=pendingRunnerPlay.team,parts=[],batterBase=batterDestination(pendingRunnerPlay.play);let scored=0;
+  if(batterBase)parts.push(`${batterBase}塁：打者`);
+  for(const base of [1,2,3]){const id=pendingRunnerPlay.runners[base];if(!id)continue;const destination=destinations[base];if(destination===4)scored++;else parts.push(`${destination}塁：${runnerLabel(team,id)||'走者'}`)}
+  $('runnerAdvancePreview').textContent=valid?`確定後：${parts.length?parts.join(' / '):'走者なし'}${scored?` / ${scored}得点`:''}`:'走者の行き先が重複しています';$('runnerAdvancePreview').classList.toggle('invalid',!valid);$('confirmRunnerAdvance').disabled=!valid;
+}
+function openRunnerAdvanceDialog(play,matchup){
+  const team=battingTeam($('homeAway').value,half),runners={1:baseRunners[1]||'',2:baseRunners[2]||'',3:baseRunners[3]||''};pendingRunnerPlay={play,matchup,team,runners};$('runnerAdvanceTitle').textContent=`${actionLabel(play)}：走者の行き先`;$('runnerAdvanceLead').textContent=`打者は${batterDestination(play)?`${batterDestination(play)}塁へ`:'アウト'}。各走者の行き先を確認してください。`;
+  const rows=$('runnerAdvanceRows');rows.innerHTML='';
+  for(const base of [1,2,3]){
+    const id=runners[base];if(!id)continue;const row=document.createElement('div');row.className='runnerAdvanceRow';const label=document.createElement('label');label.textContent=`${base}塁 ${runnerLabel(team,id)||'走者'}`;const select=document.createElement('select');select.dataset.runnerFrom=String(base);select.setAttribute('aria-label',`${base}塁走者の行き先`);
+    for(const destination of runnerDestinationOptions(play,base)){const option=document.createElement('option');option.value=String(destination);option.textContent=destinationLabel(destination,base);select.appendChild(option)}select.value=String(defaultRunnerDestination(play,base));select.addEventListener('change',runnerMovePreview);row.append(label,select);rows.appendChild(row);
+  }
+  runnerMovePreview();$('runnerAdvanceDialog').showModal();
+}
+function applyChosenRunnerMoves(play,destinations,runners,batter){
+  const next={1:'',2:'',3:''},batterBase=batterDestination(play);let scored=0;if(batterBase)next[batterBase]=batter;
+  for(const base of [1,2,3]){const id=runners[base];if(!id)continue;const destination=destinations[base];if(destination===4)scored++;else next[destination]=id}
+  return {next,scored};
+}
+function confirmRunnerAdvance(){
+  if(!pendingRunnerPlay)return;const destinations=selectedRunnerDestinations();if(!validateRunnerDestinations(pendingRunnerPlay.play,destinations,true))return;
+  const pending=pendingRunnerPlay;pendingRunnerPlay=null;$('runnerAdvanceDialog').close();commitPlateResult(pending.play,pending.matchup,destinations,pending.team,pending.runners);
+}
+function commitPlateResult(play,matchup=rawMatchupPrediction(),destinations=null,team=battingTeam($('homeAway').value,half),runners=null){
+  pushHistory();recordPlateObservation(play,matchup);const r=runners||{1:baseRunners[1]||'',2:baseRunners[2]||'',3:baseRunners[3]||''};let next={...r},scored=0;const batter=batterRunnerId(team),runnerOutPlay=['OUT','K','ADV','SF','SAC'].includes(play);
   if(play==='OUT'||play==='K')outs=Math.min(3,outs+1);
   else if(play==='DP'){outs=Math.min(3,outs+2);if(r[1])next[1]='';else if(r[2])next[2]='';else if(r[3])next[3]=''}
-  else if(play==='SAC'){outs=Math.min(3,outs+1);if(outs<3){scored=r[3]?1:0;next={1:'',2:r[1]||'',3:r[2]||''}}}
+  else if(runnerOutPlay){outs=Math.min(3,outs+1);if(outs<3){if(destinations){const chosen=applyChosenRunnerMoves(play,destinations,r,batter);next=chosen.next;scored=chosen.scored}else if(play==='SF'){scored=r[3]?1:0;next={1:r[1]||'',2:r[2]||'',3:''}}else{scored=r[3]?1:0;next={1:'',2:r[1]||'',3:r[2]||''}}}}
   else if(play==='HR'){scored=1+(r[1]?1:0)+(r[2]?1:0)+(r[3]?1:0);next={1:'',2:'',3:''}}
   else if(play==='3B'){scored=(r[1]?1:0)+(r[2]?1:0)+(r[3]?1:0);next={1:'',2:'',3:batter}}
+  else if(destinations){const chosen=applyChosenRunnerMoves(play,destinations,r,batter);next=chosen.next;scored=chosen.scored}
   else if(play==='2B'){scored=(r[2]?1:0)+(r[3]?1:0);next={1:'',2:batter,3:r[1]||''}}
   else if(play==='1B'){scored=r[3]?1:0;next={1:batter,2:r[1]||'',3:r[2]||''}}
   else if(play==='BB'||play==='E'){next={...r};if(r[1]&&r[2]&&r[3]){scored++;next[3]=''}if(r[1]&&r[2])next[3]=r[2];if(r[1])next[2]=r[1];next[1]=batter}
   addRuns(team,scored);setRunners(next);advanceBatter(team);const message=`${TEAM_NAME[team]} ${actionLabel(play)}${scored?`・${scored}得点`:''}`,walkoff=checkWalkoff();
   if(walkoff){resetPitchCount();syncOutUI();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()}
   else if(outs>=3)nextHalf();else{resetPitchCount();syncOutUI();refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate()}
-  setLastAction(message);
+  setLastAction(message);closeGameDock();
+}
+applyPlateResult=function(play){
+  const matchup=rawMatchupPrediction();if(playNeedsRunnerChoice(play)){openRunnerAdvanceDialog(play,matchup);return}commitPlateResult(play,matchup);
 };
 
 function advanceRunner(base,steal=false){
@@ -377,7 +540,7 @@ function updateFieldState(){
   $('currentBatterName').textContent=batterLabel;$('currentPitcherName').textContent=pitcherName;
   const runners=[1,2,3].filter(base=>baseRunners[base]).map(base=>`${base}塁 ${runnerLabel(batting,baseRunners[base])}`).join(' / ');
   $('fieldStateSummary').firstChild.textContent=`${batterLabel} vs ${pitcherName}｜${runners||'走者なし'}`;
-  const multiplier=fatigueMultiplier(pitcher,fielding),load=currentPitchLoad(fielding,pitcher);$('pitcherFatigue').value=String(Math.min(110,Math.floor(load/10)*10));$('fatigueHint').textContent=multiplier>1?`被打撃リスク +${((multiplier-1)*100).toFixed(1)}%相当`:'疲労補正なし';
+  const multiplier=fatigueMultiplier(pitcher,fielding),load=currentPitchLoad(fielding,pitcher);$('pitcherFatigue').value=String(Math.min(110,Math.floor(load/10)*10));$('fatigueHint').textContent=multiplier>1?`被打撃リスク +${((multiplier-1)*100).toFixed(1)}%相当`:'疲労補正なし';syncGameDock();
 }
 function setLastAction(text){lastAction=text||'';if($('lastActionStatus'))$('lastActionStatus').textContent=`直前動作：${lastAction||'なし'}`;updateFieldState();saveGameState()}
 
@@ -460,19 +623,19 @@ const scheduleUpdateV09=scheduleUpdate;
 scheduleUpdate=function(){scheduleUpdateV09();updateFieldState();saveGameState()};
 
 const applyPinchHitterV09=applyPinchHitter;
-applyPinchHitter=function(){const before=$('substitutionStatus').textContent;applyPinchHitterV09();if($('substitutionStatus').textContent!==before)setLastAction($('substitutionStatus').textContent)};
+applyPinchHitter=function(){const before=$('substitutionStatus').textContent;applyPinchHitterV09();if($('substitutionStatus').textContent!==before){setLastAction($('substitutionStatus').textContent);closeGameDock()}};
 const applyPinchRunnerV09=applyPinchRunner;
-applyPinchRunner=function(){const before=$('substitutionStatus').textContent;applyPinchRunnerV09();if($('substitutionStatus').textContent!==before)setLastAction($('substitutionStatus').textContent)};
+applyPinchRunner=function(){const before=$('substitutionStatus').textContent;applyPinchRunnerV09();if($('substitutionStatus').textContent!==before){setLastAction($('substitutionStatus').textContent);closeGameDock()}};
 const applyReliefPitcherV09=applyReliefPitcher;
 applyReliefPitcher=function(){
   const team=currentFieldingTeam(),selected=$('reliefPitcher').value,before=$('substitutionStatus').textContent;applyReliefPitcherV09();
-  if($('substitutionStatus').textContent!==before){const player=getPlayerById(team,selected,'pit'),key=pitcherKey(team,player);pitcherUsageRoles[key]='relief';pitchLoads[key]=0;$('pitcherFatigue').value='0';setLastAction($('substitutionStatus').textContent)}
+  if($('substitutionStatus').textContent!==before){const player=getPlayerById(team,selected,'pit'),key=pitcherKey(team,player);pitcherUsageRoles[key]='relief';pitchLoads[key]=0;$('pitcherFatigue').value='0';setLastAction($('substitutionStatus').textContent);closeGameDock()}
 };
 document.querySelectorAll('.playBtn').forEach(button=>button.onclick=()=>applyPlateResult(button.dataset.play));
 $('undoBtn').onclick=undoLast;$('redoBtn').onclick=redoLast;$('applyPinchHitter').onclick=applyPinchHitter;$('applyPinchRunner').onclick=applyPinchRunner;$('applyReliefPitcher').onclick=applyReliefPitcher;$('clearLearningBtn').onclick=clearObservedLearning;$('exportLearningBtn').onclick=exportObservedLearning;
 document.querySelectorAll('[data-advance-runner]').forEach(button=>button.onclick=()=>advanceRunner(Number(button.dataset.advanceRunner)));
 document.querySelectorAll('[data-steal-runner]').forEach(button=>button.onclick=()=>openSteal(Number(button.dataset.stealRunner)));
-$('pitcherFatigue').addEventListener('change',event=>{const team=currentFieldingTeam(),player=currentPitcherFor(team);pitchLoads[pitcherKey(team,player)]=Number(event.target.value);setLastAction(`${displayName(player)||TEAM_NAME[team]+'投手平均'}の投球数を${event.target.selectedOptions[0].textContent}に変更`);scheduleUpdate()});
+$('pitcherFatigue').addEventListener('change',event=>{const team=currentFieldingTeam(),player=currentPitcherFor(team);pitchLoads[pitcherKey(team,player)]=Number(event.target.value);setLastAction(`${displayName(player)||TEAM_NAME[team]+'投手平均'}の投球数を${event.target.selectedOptions[0].textContent}に変更`);scheduleUpdate();closeGameDock()});
 $('fieldStateDetails').addEventListener('toggle',saveGameState);
 for(const id of ['tigersPitcher','oppPitcher'])$(id).addEventListener('change',()=>{const team=id==='tigersPitcher'?TEAM_T:$('opponent').value,player=currentPitcherFor(team),key=pitcherKey(team,player);if(pitchLoads[key]===undefined)pitchLoads[key]=0;updateFieldState();setLastAction(`${TEAM_NAME[team]}の投手を${displayName(player)||'投手平均'}に変更`)});
 for(const base of [1,2,3])$('runner'+base).addEventListener('change',()=>setLastAction(`${base}塁走者を${runnerLabel(battingTeam($('homeAway').value,half),baseRunners[base])||'なし'}に変更`));
