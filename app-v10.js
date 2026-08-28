@@ -179,6 +179,7 @@ function setDockPanel(panel=''){
   openDockPanel=openDockPanel===panel?'':panel;
   document.querySelectorAll('.gameDockPanel').forEach(item=>{item.hidden=item.dataset.dockPanel!==openDockPanel});
   document.querySelectorAll('.gameDockTab').forEach(button=>{const active=button.dataset.dockPanel===openDockPanel;button.classList.toggle('active',active);button.setAttribute('aria-expanded',String(active))});
+  document.body.classList.toggle('gameDockOpen',Boolean(openDockPanel));
   if(openDockPanel==='runners')syncDockRunners();
 }
 function closeGameDock(){if(openDockPanel)setDockPanel(openDockPanel)}
@@ -209,8 +210,12 @@ function createGameDock(){
   const shell=document.createElement('div');shell.id='gameDock';shell.className='gameDockShell';shell.innerHTML=`
     <div class="gameDockInner">
       <button type="button" class="gameDockSummary" id="gameDockSummary" aria-label="試合情報と試合操作を開く">
-        <span class="gameDockPrimary"><strong id="dockInningText">1回表</strong><span id="dockScoreText">阪神 0－0 巨人</span><span id="dockOutText">0アウト</span></span>
-        <span class="gameDockSecondary"><span id="dockMatchupText">1番 打者 vs 投手</span><span id="dockSituationText">B0-S0｜走者なし</span></span>
+        <span class="gameDockPrimary"><strong id="dockInningText">1回表</strong><span id="dockScoreText">阪神 0－0 巨人</span><span class="dockCountLights" id="dockOutText" aria-label="ストライク0、ボール0、アウト0">
+          <span class="dockCountGroup dockCountStrike"><b>S</b><i data-sbo="strike" data-step="1"></i><i data-sbo="strike" data-step="2"></i></span>
+          <span class="dockCountGroup dockCountBall"><b>B</b><i data-sbo="ball" data-step="1"></i><i data-sbo="ball" data-step="2"></i><i data-sbo="ball" data-step="3"></i></span>
+          <span class="dockCountGroup dockCountOut"><b>O</b><i data-sbo="out" data-step="1"></i><i data-sbo="out" data-step="2"></i></span>
+        </span></span>
+        <span class="gameDockSecondary"><span id="dockMatchupText">1番 打者 vs 投手</span><span id="dockSituationText">走者なし</span></span>
       </button>
       <div class="gameDockTabs" role="toolbar" aria-label="試合入力">
         <button type="button" class="gameDockTab" data-dock-panel="game" aria-expanded="false">試合</button>
@@ -251,11 +256,16 @@ function createGameDock(){
 function syncDockRunners(){
   for(const base of [1,2,3]){const source=$('runner'+base),target=$('dockRunner'+base);if(source&&target)copySelectOptions(source,target)}
 }
+function syncDockCountLights(){
+  const values={strike:strikes,ball:balls,out:outs},lights=$('dockOutText');if(!lights)return;
+  lights.querySelectorAll('[data-sbo]').forEach(light=>light.classList.toggle('on',Number(light.dataset.step)<=values[light.dataset.sbo]));
+  lights.setAttribute('aria-label',`ストライク${strikes}、ボール${balls}、アウト${outs}`);
+}
 function syncGameDock(){
   if(!$('gameDock'))return;const opponent=$('opponent').value,batting=battingTeam($('homeAway').value,half),fielding=fieldingTeam($('homeAway').value,half),batter=currentBatterFor(batting),pitcher=currentPitcherFor(fielding),order=currentPos(batting)%9+1;
-  $('dockInningText').textContent=`${$('inning').value}回${half==='top'?'表':'裏'}`;$('dockScoreText').textContent=`阪神 ${teamScore(TEAM_T)}－${teamScore(opponent)} ${dockShortTeam(opponent)}`;$('dockOutText').textContent=`${outs}アウト`;
+  $('dockInningText').textContent=`${$('inning').value}回${half==='top'?'表':'裏'}`;$('dockScoreText').textContent=`阪神 ${teamScore(TEAM_T)}－${teamScore(opponent)} ${dockShortTeam(opponent)}`;syncDockCountLights();
   $('dockMatchupText').textContent=`${order}番 ${displayLineupName(batting,lineupIds(batting)[currentPos(batting)%9])} vs ${pitcher?displayName(pitcher):`${dockShortTeam(fielding)}投手平均`}`;
-  const runnerText=[1,2,3].filter(base=>baseRunners[base]).map(base=>`${base===1?'一':base===2?'二':'三'}:${runnerLabel(batting,baseRunners[base])}`).join(' ');$('dockSituationText').textContent=`B${balls}-S${strikes}｜${runnerText||'走者なし'}`;
+  const runnerText=[1,2,3].filter(base=>baseRunners[base]).map(base=>`${base===1?'一':base===2?'二':'三'}:${runnerLabel(batting,baseRunners[base])}`).join(' ');$('dockSituationText').textContent=runnerText||'走者なし';
   $('dockInning').value=$('inning').value;$('dockTigersScore').value=$('tigersScore').value;$('dockOpponentScore').value=$('oppScore').value;
   $('dockTop').classList.toggle('active',half==='top');$('dockBottom').classList.toggle('active',half==='bottom');document.querySelectorAll('[data-dock-out]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockOut)===outs));document.querySelectorAll('[data-dock-ball]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockBall)===balls));document.querySelectorAll('[data-dock-strike]').forEach(button=>button.classList.toggle('active',Number(button.dataset.dockStrike)===strikes));
   if(openDockPanel==='runners')syncDockRunners();

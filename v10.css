@@ -1,17 +1,26 @@
+:root{--sbo-strike:#d3b93e;--sbo-ball:#4f9a66;--sbo-out:#c65d62}
 button{transition:transform .08s ease,background-color .16s ease,border-color .16s ease,box-shadow .16s ease}
 button:active{transform:scale(.97);background:#343439;border-color:#76767e}
 button.pressedFeedback{background:var(--accent);border-color:var(--accent);color:#111;box-shadow:0 0 0 3px rgba(242,210,27,.18)}
+body.gameDockOpen{overflow:hidden;overscroll-behavior:none}
 body .wrap{padding-top:calc(132px + env(safe-area-inset-top));padding-bottom:190px}
 body .probDock{bottom:calc(70px + env(safe-area-inset-bottom))}
 body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameDockShell{position:fixed;z-index:30;top:0;left:0;right:0;padding-top:env(safe-area-inset-top);background:#101012;border-bottom:1px solid #4a4a50;box-shadow:0 8px 24px rgba(0,0,0,.46);pointer-events:none}
-.gameDockInner{position:relative;width:min(720px,100%);margin:0 auto;background:#101012;pointer-events:auto}
+.gameDockInner{--game-dock-head:116px;position:relative;width:min(720px,100%);margin:0 auto;background:#101012;pointer-events:auto}
 .gameDockSummary{width:100%;min-height:70px;padding:8px 12px;border:0;border-radius:0;background:#101012;text-align:left;display:block}
 .gameDockSummary:active{transform:none;background:#18181b}
 .gameDockPrimary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;min-width:0}
 .gameDockPrimary strong{color:var(--accent);font-size:15px;white-space:nowrap}
-.gameDockPrimary span{font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gameDockPrimary>#dockScoreText{font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gameDockPrimary #dockScoreText{text-align:center}
+.dockCountLights{display:flex;align-items:center;justify-content:flex-end;gap:5px;white-space:nowrap}
+.dockCountGroup{display:flex;align-items:center;gap:2px}
+.dockCountGroup b{width:10px;color:#a9a9ae;font-size:9px;line-height:1;text-align:center}
+.dockCountGroup i{display:block;width:7px;height:7px;border:1px solid #55555b;border-radius:50%;background:#29292d}
+.dockCountStrike i.on{background:var(--sbo-strike);border-color:var(--sbo-strike);box-shadow:0 0 0 1px rgba(211,185,62,.15)}
+.dockCountBall i.on{background:var(--sbo-ball);border-color:var(--sbo-ball);box-shadow:0 0 0 1px rgba(79,154,102,.15)}
+.dockCountOut i.on{background:var(--sbo-out);border-color:var(--sbo-out);box-shadow:0 0 0 1px rgba(198,93,98,.15)}
 .gameDockSecondary{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px;margin-top:6px;color:#d4d4d8;font-size:11px;font-weight:700;min-width:0}
 .gameDockSecondary span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .gameDockSecondary #dockSituationText{text-align:right;color:var(--muted)}
@@ -19,7 +28,7 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameDockTab{min-width:0;height:46px;padding:0 3px;border:0;border-right:1px solid var(--line);border-radius:0;background:#17171a;color:#dcdce0;font-size:11px;white-space:nowrap}
 .gameDockTab:last-child{border-right:0}
 .gameDockTab.active{background:var(--accent);color:#111}
-.gameDockPanel{position:absolute;top:100%;left:0;right:0;max-height:min(52dvh,440px);overflow:auto;padding:14px;background:#17171a;border:1px solid #505057;border-top-color:var(--accent);box-shadow:0 18px 34px rgba(0,0,0,.66);overscroll-behavior:contain}
+.gameDockPanel{position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - var(--game-dock-head) - env(safe-area-inset-top));overflow:hidden;padding:14px;background:#17171a;border:1px solid #505057;border-top-color:var(--accent);box-shadow:0 18px 34px rgba(0,0,0,.66)}
 .gameDockPanel[hidden]{display:none}
 .dockPanelHeading{font-size:14px;font-weight:900;color:var(--accent);margin-bottom:12px}
 .dockGameGrid{display:grid;grid-template-columns:minmax(110px,.75fr) minmax(0,1.6fr);gap:10px;align-items:end}
@@ -33,6 +42,9 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .dockCountGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dockBallButtons{grid-template-columns:repeat(4,1fr)}
 .dockStrikeButtons{grid-template-columns:repeat(3,1fr)}
+.outBtn.active,.dockOutButtons button.active{background:var(--sbo-out);border-color:var(--sbo-out);color:#101012}
+.ballBtn.active,.dockBallButtons button.active{background:var(--sbo-ball);border-color:var(--sbo-ball);color:#101012}
+.strikeBtn.active,.dockStrikeButtons button.active{background:var(--sbo-strike);border-color:var(--sbo-strike);color:#101012}
 .dockPlayGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
 .dockPlayGrid button{min-height:44px;border-radius:7px;padding:8px 4px}
 .dockRunnerGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
@@ -102,19 +114,37 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameResultActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
 .gameResultActions button{min-height:48px}
 .rosterSourceNote{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
+.learningPanel .row>div{min-width:0}
+#learningGameDate{display:block;min-width:0;max-width:100%}
 @media(max-width:520px){
   body .wrap{padding-top:calc(128px + env(safe-area-inset-top))}
+  .gameDockInner{--game-dock-head:112px}
   .gameDockSummary{min-height:66px;padding:7px 9px}
   .gameDockPrimary{gap:7px}
   .gameDockPrimary strong{font-size:14px}
   .gameDockPrimary span{font-size:12px}
   .gameDockSecondary{font-size:10px;gap:7px}
-  .gameDockPanel{padding:12px;max-height:56dvh}
+  .gameDockPanel{padding:10px 12px;max-height:calc(100dvh - var(--game-dock-head) - env(safe-area-inset-top))}
+  .dockPanelHeading{margin-bottom:8px}
   .dockGameGrid,.dockCountGrid{grid-template-columns:1fr}
   .dockPlayGrid{grid-template-columns:repeat(3,1fr)}
   .dockRunnerGrid{grid-template-columns:1fr}
   .matchupPanel{grid-template-columns:1fr}
   .fatigueControl{grid-column:auto;grid-template-columns:1fr}
+  .dockPlayersPanel .fatigueControl{grid-template-columns:minmax(0,1fr) 124px;align-items:center;gap:8px;margin-bottom:8px;padding:8px}
+  .dockPlayersPanel .fatigueControl label{margin-bottom:3px}
+  .dockPlayersPanel .fatigueControl select{min-height:40px;padding:7px}
+  .dockPlayersPanel .substitutionPanel{padding:8px}
+  .dockPlayersPanel .substitutionGrid{grid-template-columns:1fr;gap:8px}
+  .dockPlayersPanel .substitutionGrid>div{display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:end;gap:5px;min-width:0}
+  .dockPlayersPanel .substitutionGrid>div:nth-child(2){grid-template-columns:62px minmax(0,1fr) 88px}
+  .dockPlayersPanel .substitutionGrid label{grid-column:1/-1;margin-bottom:0}
+  .dockPlayersPanel .substitutionGrid select{min-width:0;min-height:40px;padding:7px}
+  .dockPlayersPanel .substitutionGrid .searchSelect{min-width:0}
+  .dockPlayersPanel .substitutionGrid .searchTrigger{min-height:40px}
+  .dockPlayersPanel .substitutionGrid button:not(.searchTrigger){min-width:0;min-height:40px;margin:0;padding:5px 4px;font-size:11px;line-height:1.25}
+  .dockPlayersPanel #pinchRunner{margin-top:0!important}
+  .dockPlayersPanel .substitutionStatus{margin-top:7px;min-height:15px}
   .runnerGrid{grid-template-columns:1fr}
   .historyControl{width:104px}
 }
