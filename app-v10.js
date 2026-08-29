@@ -239,9 +239,9 @@ function createGameDock(){
   const shell=document.createElement('div');shell.id='gameDock';shell.className='gameDockShell';shell.innerHTML=`
     <div class="gameDockInner">
       <button type="button" class="gameDockSummary" id="gameDockSummary" aria-label="試合情報と試合操作を開く">
-        <span class="gameDockPrimary"><strong id="dockInningText">1回表</strong><span id="dockScoreText">阪神 0－0 巨人</span><span class="dockCountLights" id="dockOutText" aria-label="ストライク0、ボール0、アウト0">
-          <span class="dockCountGroup dockCountStrike"><b>S</b><i data-sbo="strike" data-step="1"></i><i data-sbo="strike" data-step="2"></i></span>
+        <span class="gameDockPrimary"><strong id="dockInningText">1回表</strong><span id="dockScoreText">阪神 0－0 巨人</span><span class="dockCountLights" id="dockOutText" aria-label="ボール0、ストライク0、アウト0">
           <span class="dockCountGroup dockCountBall"><b>B</b><i data-sbo="ball" data-step="1"></i><i data-sbo="ball" data-step="2"></i><i data-sbo="ball" data-step="3"></i></span>
+          <span class="dockCountGroup dockCountStrike"><b>S</b><i data-sbo="strike" data-step="1"></i><i data-sbo="strike" data-step="2"></i></span>
           <span class="dockCountGroup dockCountOut"><b>O</b><i data-sbo="out" data-step="1"></i><i data-sbo="out" data-step="2"></i></span>
         </span></span>
         <span class="gameDockSecondary"><span id="dockMatchupText">1番 打者 vs 投手</span><span id="dockSituationText">走者なし</span></span>
@@ -288,7 +288,7 @@ function syncDockRunners(){
 function syncDockCountLights(){
   const values={strike:strikes,ball:balls,out:outs},lights=$('dockOutText');if(!lights)return;
   lights.querySelectorAll('[data-sbo]').forEach(light=>light.classList.toggle('on',Number(light.dataset.step)<=values[light.dataset.sbo]));
-  lights.setAttribute('aria-label',`ストライク${strikes}、ボール${balls}、アウト${outs}`);
+  lights.setAttribute('aria-label',`ボール${balls}、ストライク${strikes}、アウト${outs}`);
 }
 function syncGameDock(){
   if(!$('gameDock'))return;const opponent=$('opponent').value,batting=battingTeam($('homeAway').value,half),fielding=fieldingTeam($('homeAway').value,half),batter=currentBatterFor(batting),pitcher=currentPitcherFor(fielding),order=currentPos(batting)%9+1;
