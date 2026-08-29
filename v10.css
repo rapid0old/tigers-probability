@@ -11,10 +11,29 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameDockInner{--game-dock-head:116px;position:relative;width:min(720px,100%);margin:0 auto;background:#101012;pointer-events:auto}
 .gameDockSummary{width:100%;min-height:70px;padding:8px 12px;border:0;border-radius:0;background:#101012;text-align:left;display:block}
 .gameDockSummary:active{transform:none;background:#18181b}
-.gameDockPrimary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:9px;min-width:0}
+.gameDockPrimary{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;
+  gap:9px;
+  min-width:0
+}
+
+#dockInningText{
+  justify-self:start;
+}
+
+#dockScoreText{
+  justify-self:center;
+  text-align:center;
+  white-space:nowrap;
+}
+
+#dockOutText{
+  justify-self:end;
+}
 .gameDockPrimary strong{color:var(--accent);font-size:15px;white-space:nowrap}
 .gameDockPrimary>#dockScoreText{font-size:14px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gameDockPrimary #dockScoreText{text-align:center}
 .dockCountLights{display:flex;align-items:center;justify-content:flex-end;gap:5px;white-space:nowrap}
 .dockCountGroup{display:flex;align-items:center;gap:2px}
 .dockCountGroup b{width:10px;color:#a9a9ae;font-size:9px;line-height:1;text-align:center}
