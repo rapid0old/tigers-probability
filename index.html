@@ -1077,6 +1077,8 @@ function fillSubstitutionSelect(sel,arr,type,placeholder){
   sel.value=[...sel.options].some(o=>o.value===old)?old:'';
 }
 function refreshSubstitutionUI(){
+  const m=activeModel(),batTeam=battingTeam($('homeAway').value,half),fieldTeam=fieldingTeam($('homeAway').value,half);
+  const batters=m?.byBat?.[batTeam]||[],allPitchers=m?.byPit?.[fieldTeam]||[];
   const pitchers=allPitchers;
   $('substitutionSummary').textContent=`選手交代（攻撃：${TEAM_NAME[batTeam]}）`;
   $('pinchHitterLabel').textContent=`${TEAM_NAME[batTeam]}・代打`;
