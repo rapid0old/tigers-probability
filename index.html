@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="阪神確率">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./v10.css">
+<link rel="stylesheet" href="./v10.css?v=production-20260917-1">
 <title>阪神 試合確率チェッカー</title>
 <style>
 :root{--bg:#0f0f10;--card:#19191b;--card2:#222225;--text:#f6f6f6;--muted:#a9a9ae;--line:#333338;--accent:#f2d21b;--good:#61d37a;--bad:#ff6b6b;--blue:#67a8ff}
@@ -122,7 +122,14 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v2.0.2</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v2.1.0</div></div></header>
+
+<nav class="appViewTabs" aria-label="表示画面">
+  <button id="gameProbabilityTab" class="active" type="button" aria-selected="true">試合確率</button>
+  <button id="leagueSimulatorTab" type="button" aria-selected="false">優勝・CS</button>
+</nav>
+
+<div id="gameProbabilityView">
 
 <section class="card">
   <div id="modelBadge" class="badge good">2026初期選手モデル</div>
@@ -290,11 +297,68 @@ a{color:#b7cfff}
 <footer>
 得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
 内蔵選手名：<a href="https://npb.jp/bis/teams/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 2026年度選手一覧</a>、<a href="https://m.hanshintigers.jp/data/player_list/2026" target="_blank" rel="noopener noreferrer">阪神タイガース公式 2026選手プロフィール</a>。<br>
-公式選手成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式 2026個人成績</a>と日別投打成績を2026年8月28日終了試合まで反映。通常更新は前回以降の試合IDだけを追加します。<br>
+公式選手成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式 2026個人成績</a>と日別投打成績を2026年9月17日終了試合まで反映。通常更新は前回以降の試合IDだけを追加します。<br>
 左右・球場補正：NPB公式の投打情報、2024年以降のNPB公式試合結果、<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式 2025左右別wOBA公開集計</a>を保守的に縮約して使用。<br>
 カウント補正の方向性：<a href="https://www.mlb.com/glossary/statcast/catcher-framing" target="_blank" rel="noopener noreferrer">MLB公式 Statcast Glossary</a>の公開例（2025年の1-0後と0-1後のOPS差）を確認し、NPB実測値とは区別した保守的な試用係数として実装しています。<br>
 非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
 </footer>
+</div>
+
+<main id="leagueSimulatorView" class="leagueSimulatorView" hidden>
+  <section class="leagueHero">
+    <div>
+      <span class="leagueEyebrow">League Baseline Model v1</span>
+      <h2>優勝・CS確率</h2>
+      <p>2026年9月17日終了時点の公式結果と残り日程を、12球団共通の固定Eloで計算します。</p>
+    </div>
+    <div class="leagueSnapshotStatus"><span>基準日</span><strong>2026.09.17</strong></div>
+  </section>
+
+  <section class="leagueControls" aria-label="シミュレーション設定">
+    <div class="leagueSegment" role="tablist" aria-label="リーグ">
+      <button id="centralLeagueTab" class="active" type="button" role="tab" aria-selected="true">セ・リーグ</button>
+      <button id="pacificLeagueTab" type="button" role="tab" aria-selected="false">パ・リーグ</button>
+    </div>
+    <div class="leagueRunControls">
+      <label>計算回数<select id="leagueIterations"><option value="10000">10,000回</option><option value="50000" selected>50,000回</option><option value="100000">100,000回</option></select></label>
+      <label>乱数seed<input id="leagueRandomSeed" type="text" value="baseline-2026-09-17" autocomplete="off"></label>
+      <button id="runLeagueSimulation" class="primary" type="button">再計算</button>
+    </div>
+    <div id="leagueRunStatus" class="leagueRunStatus" aria-live="polite">計算準備中</div>
+  </section>
+
+  <section class="leagueResults" aria-labelledby="leagueResultsTitle">
+    <div class="leagueSectionHead"><div><span>予測一覧</span><h3 id="leagueResultsTitle">セ・リーグ</h3></div><div id="leagueOverrideBadge" class="leagueOverrideBadge">速報入力 0試合</div></div>
+    <div class="leagueTableScroll">
+      <table class="leagueSummaryTable">
+        <thead><tr><th>球団</th><th>優勝</th><th>CS</th><th>予想順位</th><th>予想最終成績</th></tr></thead>
+        <tbody id="leagueSummaryBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <details class="leagueDisclosure" open>
+    <summary>最終順位分布</summary>
+    <div class="leagueTableScroll">
+      <table class="leagueRankTable">
+        <thead><tr><th>球団</th><th>1位</th><th>2位</th><th>3位</th><th>4位</th><th>5位</th><th>6位</th></tr></thead>
+        <tbody id="leagueRankBody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <details class="leagueDisclosure">
+    <summary>試合結果の速報入力 <span id="leagueRemainingCount"></span></summary>
+    <p class="leagueDisclosureNote">公式スナップショットは変更しません。勝敗・引分は確定結果として計算し、中止は未消化試合のままこの端末に保存します。</p>
+    <div class="leagueOverrideActions"><button id="clearLeagueOverrides" class="secondary" type="button">表示リーグの入力を解除</button></div>
+    <div id="leagueFixtureList" class="leagueFixtureList"></div>
+  </details>
+
+  <details class="leagueDisclosure">
+    <summary>モデル仕様・データ出典</summary>
+    <div id="leagueModelDetails" class="leagueModelDetails"></div>
+  </details>
+</main>
 </div>
 <div class="probDock" id="probDock" aria-label="確率サマリー" aria-live="polite">
   <button data-detail="run"><span class="dockLabel">この回1点+</span><span class="dockValue" id="dockRunProb">--%</span></button>
@@ -310,8 +374,8 @@ a{color:#b7cfff}
 </dialog>
 <div id="toast" class="toast"></div>
 
-<script src="./rosters.js"></script>
-<script src="./stats-v13.js"></script>
+<script src="./rosters.js?v=production-20260917-1"></script>
+<script src="./stats-v13.js?v=production-20260917-1"></script>
 <script>
 const SEASON = 2026;
 const TEAM_T = 'Tigers';
@@ -326,7 +390,7 @@ const TEAM_NAME = Object.fromEntries(TEAMS);
 const AVG_LINEUP_ID='__avg__';
 const PITCHER_LINEUP_ID='__pitcher__';
 const OPP_LINEUP_STORAGE='tigersOpponentLineupsV1';
-const BUILTIN_SNAPSHOT_DATE=window.NPB_2026_STATS_SNAPSHOT?.snapshotDate||'2026-08-28';
+const BUILTIN_SNAPSHOT_DATE=window.NPB_2026_STATS_SNAPSHOT?.snapshotDate||'2026-09-17';
 const LEARNING_STORAGE='tigersObservedLearningV1';
 const LEARNING_EVENTS=['1B','2B','3B','HR','BB','K','OUT'];
 const LEARNING_PRIOR_PA=48;
@@ -1388,6 +1452,7 @@ document.querySelectorAll('#probDock button').forEach(b=>b.onclick=()=>openProba
 loadStats();loadObservedLearning();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
-<script src="./app-v10.js"></script>
+<script src="./app-v10.js?v=production-20260917-1"></script>
+<script type="module" src="./league-simulator-ui.mjs?v=production-20260917-1"></script>
 </body>
 </html>

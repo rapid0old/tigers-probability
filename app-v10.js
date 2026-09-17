@@ -312,6 +312,31 @@ function decorateSearchSelects(){
     button.onclick=()=>openPlayerSearch(select);wrapper.appendChild(button);
   }
 }
+function moveLineupSlot(grid,from,to){
+  if(!grid||from===to||from<0||to<0||from>8||to>8)return;
+  const team=grid.id==='tigersLineup'?TEAM_T:$('opponent').value,values=lineupIds(team),positionSelect=team===TEAM_T?$('tigersBatterPos'):$('oppBatterPos'),currentIndex=currentPos(team),currentId=values[currentIndex];
+  const next=[...values],moved=next.splice(from,1)[0];next.splice(to,0,moved);pushHistory();
+  next.forEach((id,index)=>{const select=$(team===TEAM_T?`tLine${index}`:`oLine${index}`);if(select)select.value=id});
+  if(currentId&&values.filter(id=>id===currentId).length===1){const nextIndex=next.indexOf(currentId);if(nextIndex>=0)positionSelect.value=String(nextIndex)}
+  if(team!==TEAM_T)saveOpponentLineup(team);
+  refreshBatterPosLabels();refreshRunnerOptions();scheduleUpdate();setLastAction(`${TEAM_NAME[team]}の${from+1}番を${to+1}番へ移動`);
+  const row=grid.querySelector(`[data-lineup-index="${to}"]`);if(row){row.classList.remove('lineupMoved');requestAnimationFrame(()=>row.classList.add('lineupMoved'));setTimeout(()=>row.classList.remove('lineupMoved'),420)}
+}
+function decorateLineupReordering(){
+  for(const gridId of ['tigersLineup','oppLineup']){
+    const grid=$(gridId);if(!grid||grid.querySelector('.lineupOrderItem'))continue;
+    const slots=[...grid.children].filter(child=>child.classList.contains('slot'));
+    slots.forEach((slot,index)=>{
+      const select=$(slot.dataset.for),picker=select?.parentElement?.classList.contains('searchSelect')?select.parentElement:select;if(!select||!picker)return;
+      const item=document.createElement('div');item.className='lineupOrderItem';item.dataset.lineupIndex=String(index);grid.insertBefore(item,slot);
+      const header=document.createElement('div');header.className='lineupOrderHeader';
+      const controls=document.createElement('div');controls.className='lineupOrderControls';
+      const up=document.createElement('button');up.type='button';up.className='lineupMoveButton';up.textContent='↑';up.title='一つ上へ';up.setAttribute('aria-label',`${index+1}番を一つ上へ`);up.disabled=index===0;up.onclick=()=>moveLineupSlot(grid,index,index-1);
+      const down=document.createElement('button');down.type='button';down.className='lineupMoveButton';down.textContent='↓';down.title='一つ下へ';down.setAttribute('aria-label',`${index+1}番を一つ下へ`);down.disabled=index===8;down.onclick=()=>moveLineupSlot(grid,index,index+1);
+      controls.append(up,down);header.append(slot,controls);item.append(header,picker);
+    });
+  }
+}
 function openPlayerSearch(select){
   searchTarget=select;$('playerSearchTitle').textContent=`${selectLabel(select)}を検索`;$('playerSearchInput').value='';renderSearchResults();
   const dialog=$('playerSearchDialog');dialog.showModal();setTimeout(()=>$('playerSearchInput').focus(),0);
@@ -661,7 +686,7 @@ refreshBatterPosLabels=function(){refreshBatterPosLabelsV09();updateFieldState()
 const syncBaseUIV09=syncBaseUI;
 syncBaseUI=function(){syncBaseUIV09();updateFieldState()};
 const refreshPlayerUIV09=refreshPlayerUI;
-refreshPlayerUI=function(){refreshPlayerUIV09();decorateSearchSelects();updateFieldState()};
+refreshPlayerUI=function(){refreshPlayerUIV09();decorateSearchSelects();decorateLineupReordering();updateFieldState()};
 const updateStatusV09=updateStatus;
 updateStatus=function(){
   updateStatusV09();const count=Object.values(rosterSnapshot.rosters||{}).reduce((sum,players)=>sum+players.length,0),date=rosterSnapshot.snapshotDate?.replaceAll('-','/');
@@ -771,5 +796,5 @@ window.addEventListener('pagehide',()=>{try{const state=snapshot();delete state.
 
 const footer=document.querySelector('footer');if(footer){const note=document.createElement('div');note.className='rosterSourceNote';note.innerHTML=`公式個人成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB.jp 2026個人成績</a>（${statsSnapshot.snapshotDate?.replaceAll('-','/')}時点）の静的スナップショット。通常更新は前回基準日以降の<a href="https://npb.jp/bis/2026/games/" target="_blank" rel="noopener noreferrer">公式試合結果</a>だけを試合ID単位で追加し、ページ表示時の外部通信は行いません。<br>現役支配下選手名：<a href="https://npb.jp/bis/players/active/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 現役選手一覧</a>。未収録の個人成績は同球団平均を使用。<br>左右補正：NPB公式の投打情報と<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式の2025左右別wOBA公開集計</a>を50%に縮約。球場補正：2024年以降のNPB公式試合結果を180試合分リーグ平均へ縮約し最大±3%。<br>投手疲労補正：<a href="https://www.mlb.com/glossary/standard-stats/number-of-pitches" target="_blank" rel="noopener noreferrer">MLB Pitch Count</a>、<a href="https://www.mlb.com/glossary/miscellaneous/third-time-through-the-order-penalty" target="_blank" rel="noopener noreferrer">Third Time Through the Order Penalty</a>を基にした保守的な役割別段階補正。`;footer.appendChild(note)}
 
-refreshPlayerUI();decorateSearchSelects();updateStatus();restoreGameState();updateLearningUI();updateFieldState();update();
+refreshPlayerUI();decorateSearchSelects();decorateLineupReordering();updateStatus();restoreGameState();updateLearningUI();updateFieldState();update();
 })();
