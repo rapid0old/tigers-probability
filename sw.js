@@ -1,4 +1,4 @@
-const CACHE='tigers-probability-production-v2.1.0-20260917-1';
+const CACHE='tigers-probability-production-v3.0.0-20260917-1';
 const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg','./v10.css?v=production-20260917-1','./rosters.js?v=production-20260917-1','./stats-v13.js?v=production-20260917-1','./app-v10.js?v=production-20260917-1','./league-data-2026.mjs','./league-simulator-core.mjs?v=canceled-1','./league-simulator-ui.mjs?v=production-20260917-1'];
 
 self.addEventListener('install',event=>{
