@@ -62,6 +62,8 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .dockParkControl label{margin:0}
 .dockParkControl select{min-width:0;width:100%}
 .dockOutButtons{max-width:360px}
+.dockNextGameRow{display:flex;justify-content:flex-end;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.dockNextGameRow button{min-width:132px;min-height:40px;padding:8px 12px;border-radius:7px;background:#202024;color:#dedee2}
 .dockCountGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .dockBallButtons{grid-template-columns:repeat(4,1fr)}
 .dockStrikeButtons{grid-template-columns:repeat(3,1fr)}
@@ -117,8 +119,8 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .lineupOrderItem .searchSelect{gap:4px}
 .lineupOrderItem .searchTrigger{flex-basis:40px;min-width:40px;padding-left:3px;padding-right:3px}
 .lastActionStatus{margin-top:9px;padding:10px 12px;border-left:3px solid var(--accent);background:#111114;color:#dedee2;font-size:12px;line-height:1.5;min-height:38px}
-.playerSearchDialog,.stealDialog,.gameResultDialog,.runnerAdvanceDialog{width:min(500px,calc(100% - 24px));max-height:min(720px,calc(100dvh - 28px));color:var(--text);background:var(--card);border:1px solid #55555c;border-radius:8px;padding:16px;box-shadow:0 18px 55px rgba(0,0,0,.65)}
-.playerSearchDialog::backdrop,.stealDialog::backdrop,.gameResultDialog::backdrop,.runnerAdvanceDialog::backdrop{background:rgba(0,0,0,.76)}
+.playerSearchDialog,.stealDialog,.gameResultDialog,.nextGameConfirmDialog,.runnerAdvanceDialog{width:min(500px,calc(100% - 24px));max-height:min(720px,calc(100dvh - 28px));color:var(--text);background:var(--card);border:1px solid #55555c;border-radius:8px;padding:16px;box-shadow:0 18px 55px rgba(0,0,0,.65)}
+.playerSearchDialog::backdrop,.stealDialog::backdrop,.gameResultDialog::backdrop,.nextGameConfirmDialog::backdrop,.runnerAdvanceDialog::backdrop{background:rgba(0,0,0,.76)}
 .dialogHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .dialogHeader strong{font-size:16px}
 .dialogHeader button{width:40px;height:40px;padding:0;font-size:22px}
@@ -158,6 +160,9 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameResultScore{color:#d7d7db;font-size:15px;font-weight:750}
 .gameResultActions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}
 .gameResultActions button{min-height:48px}
+.nextGameConfirmDialog p{margin:4px 0 18px;color:#d7d7db;font-size:14px;line-height:1.65}
+.nextGameConfirmActions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nextGameConfirmActions button{min-height:46px}
 .rosterSourceNote{margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
 .learningPanel .row>div{min-width:0}
 #learningGameDate{display:block;min-width:0;max-width:100%}

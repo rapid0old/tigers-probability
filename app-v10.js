@@ -18,6 +18,7 @@ let stealBase = 0;
 let redoHistory = [];
 let gameEnded = false;
 let gameEndReason = '';
+let nextGameTransitioning = false;
 let pendingRunnerPlay = null;
 let openDockPanel = '';
 let dockProxyClick = false;
@@ -160,8 +161,19 @@ function createGameResultDialog(){
     <div class="gameResultActions"><button type="button" class="secondary" id="gameResultBack">戻る</button><button type="button" class="primary" id="startNextGame">次の試合へ</button></div>`;
   document.body.appendChild(dialog);
   $('gameResultBack').onclick=returnToFinishedGame;
-  $('startNextGame').onclick=startNextGame;
+  $('startNextGame').onclick=requestNextGame;
   dialog.addEventListener('cancel',event=>{event.preventDefault();returnToFinishedGame()});
+}
+function createNextGameConfirmDialog(){
+  const dialog=document.createElement('dialog');dialog.id='nextGameConfirmDialog';dialog.className='nextGameConfirmDialog';dialog.innerHTML=`
+    <div class="dialogHeader"><strong>次の試合へ</strong></div>
+    <p>この試合はまだ終了していません。ここまでの入力を残して、次の試合へ進みますか？</p>
+    <div class="nextGameConfirmActions"><button type="button" class="secondary" id="cancelNextGame">キャンセル</button><button type="button" class="primary" id="confirmNextGame">次の試合へ</button></div>`;
+  document.body.appendChild(dialog);
+  const cancel=()=>{if(dialog.open)dialog.close()};
+  $('cancelNextGame').onclick=cancel;
+  $('confirmNextGame').onclick=beginNextGame;
+  dialog.addEventListener('cancel',event=>{event.preventDefault();cancel()});
 }
 function createRunnerAdvanceDialog(){
   const dialog=document.createElement('dialog');dialog.id='runnerAdvanceDialog';dialog.className='runnerAdvanceDialog';dialog.innerHTML=`
@@ -258,6 +270,7 @@ function createGameDock(){
         <div class="dockGameGrid"><div><label for="dockInning">イニング</label><select id="dockInning"></select></div><div class="dockHalfControl"><label>表・裏</label><div class="dockSegment"><button type="button" id="dockTop">表</button><button type="button" id="dockBottom">裏</button><button type="button" id="dockNextHalf">次の半回</button></div></div></div>
         <div class="dockScoreGrid"><div><label for="dockTigersScore">阪神</label><input id="dockTigersScore" type="number" inputmode="numeric" min="0" max="99"></div><div class="dockScoreDash">－</div><div><label for="dockOpponentScore">相手</label><input id="dockOpponentScore" type="number" inputmode="numeric" min="0" max="99"></div></div>
         <label>アウト</label><div class="dockSegment dockOutButtons"><button type="button" data-dock-out="0">0</button><button type="button" data-dock-out="1">1</button><button type="button" data-dock-out="2">2</button></div>
+        <div class="dockNextGameRow"><button type="button" id="dockStartNextGame">次の試合へ</button></div>
       </div>
       <div class="gameDockPanel" data-dock-panel="count" hidden>
         <div class="dockPanelHeading">ボール・ストライク</div>
@@ -272,6 +285,7 @@ function createGameDock(){
   document.querySelectorAll('.gameDockTab').forEach(button=>button.onclick=()=>setDockPanel(button.dataset.dockPanel));
   copySelectOptions($('inning'),$('dockInning'));mirrorDockValue($('dockInning'),$('inning'));mirrorDockValue($('dockTigersScore'),$('tigersScore'));mirrorDockValue($('dockOpponentScore'),$('oppScore'));
   $('dockTop').onclick=()=>clickDockSource('#topBtn');$('dockBottom').onclick=()=>clickDockSource('#botBtn');$('dockNextHalf').onclick=()=>{clickDockSource('#nextHalf');closeGameDock()};
+  $('dockStartNextGame').onclick=requestNextGame;
   document.querySelectorAll('[data-dock-out]').forEach(button=>button.onclick=()=>clickDockSource(`.outBtn[data-o="${button.dataset.dockOut}"]`));
   document.querySelectorAll('[data-dock-ball]').forEach(button=>button.onclick=()=>clickDockSource(`.ballBtn[data-count="${button.dataset.dockBall}"]`));
   document.querySelectorAll('[data-dock-strike]').forEach(button=>button.onclick=()=>clickDockSource(`.strikeBtn[data-count="${button.dataset.dockStrike}"]`));
@@ -358,6 +372,7 @@ createFieldStateUI();
 createSearchDialog();
 createStealDialog();
 createGameResultDialog();
+createNextGameConfirmDialog();
 createRunnerAdvanceDialog();
 createGameDock();
 
@@ -567,9 +582,27 @@ nextHalf=function(){
   if(inning>=12)return finishGame('draw-after-12');
   $('inning').value=String(inning+1);setHalf('top',true);return false;
 };
+function setNextGameControlsDisabled(disabled){
+  for(const id of ['startNextGame','dockStartNextGame','confirmNextGame']){const button=$(id);if(button)button.disabled=disabled}
+}
+function beginNextGame(){
+  if(nextGameTransitioning)return false;
+  nextGameTransitioning=true;setNextGameControlsDisabled(true);
+  const confirmDialog=$('nextGameConfirmDialog');if(confirmDialog?.open)confirmDialog.close();
+  startNextGame();
+  setTimeout(()=>{nextGameTransitioning=false;setNextGameControlsDisabled(false)},600);
+  return true;
+}
+function requestNextGame(){
+  if(nextGameTransitioning)return false;
+  if(gameEnded)return beginNextGame();
+  const dialog=$('nextGameConfirmDialog');if(dialog.open)return false;
+  if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+  return false;
+}
 function startNextGame(){
   const opponent=$('opponent').value,tigersPitcher=$('tigersPitcher').value,oppPitcher=$('oppPitcher').value;
-  closeGameResult();gameEnded=false;gameEndReason='';half='top';$('inning').value='1';$('tigersScore').value='0';$('oppScore').value='0';$('tigersBatterPos').value='0';$('oppBatterPos').value='0';
+  closeGameResult();closeGameDock();gameEnded=false;gameEndReason='';half='top';$('inning').value='1';$('tigersScore').value='0';$('oppScore').value='0';$('tigersBatterPos').value='0';$('oppBatterPos').value='0';
   resetOutsAndBases();pitchLoads={};pitcherUsageRoles={};
   for(let index=0;index<9;index++)$('tLine'+index).value='';
   fillLineup(TEAM_T,'tLine');fillLineup(opponent,'oLine');
