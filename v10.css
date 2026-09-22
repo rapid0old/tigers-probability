@@ -48,7 +48,7 @@ body .toast{bottom:calc(142px + env(safe-area-inset-bottom))}
 .gameDockTab{min-width:0;height:46px;padding:0 3px;border:0;border-right:1px solid var(--line);border-radius:0;background:#17171a;color:#dcdce0;font-size:11px;white-space:nowrap}
 .gameDockTab:last-child{border-right:0}
 .gameDockTab.active{background:var(--accent);color:#111}
-.gameDockPanel{position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - var(--game-dock-head) - env(safe-area-inset-top));overflow:hidden;padding:14px;background:#17171a;border:1px solid #505057;border-top-color:var(--accent);box-shadow:0 18px 34px rgba(0,0,0,.66)}
+.gameDockPanel{position:absolute;top:100%;left:0;right:0;max-height:calc(100dvh - var(--game-dock-head) - env(safe-area-inset-top));overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:14px;background:#17171a;border:1px solid #505057;border-top-color:var(--accent);box-shadow:0 18px 34px rgba(0,0,0,.66)}
 .gameDockPanel[hidden]{display:none}
 .dockPanelHeading{font-size:14px;font-weight:900;color:var(--accent);margin-bottom:12px}
 .dockGameGrid{display:grid;grid-template-columns:minmax(110px,.75fr) minmax(0,1.6fr);gap:10px;align-items:end}
