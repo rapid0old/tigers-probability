@@ -1,5 +1,5 @@
-const CACHE='tigers-probability-production-v4.0.0-20260917-1';
-const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg','./v10.css?v=production-v4.0.0-1','./rosters.js?v=production-20260917-1','./stats-v13.js?v=production-20260917-1','./app-v10.js?v=production-v4.0.0-1','./league-data-2026.mjs','./league-simulator-core.mjs?v=production-v4.0.0-1','./league-simulator-ui.mjs?v=production-v4.0.0-1','./what-if-base-context.mjs','./what-if-scenario.mjs','./scenario-store.mjs','./what-if-simulator.mjs'];
+const CACHE='tigers-probability-production-v4.0.1-20260917-1';
+const CORE=['./','./index.html','./manifest.webmanifest','./icon.svg','./v10.css?v=production-v4.0.1-1','./rosters.js?v=production-20260917-1','./stats-v13.js?v=production-20260917-1','./app-v10.js?v=production-v4.0.1-1','./league-data-2026.mjs','./league-simulator-core.mjs?v=production-v4.0.0-1','./league-simulator-ui.mjs?v=production-v4.0.1-1','./what-if-base-context.mjs','./what-if-scenario.mjs','./scenario-store.mjs','./what-if-simulator.mjs'];
 
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));

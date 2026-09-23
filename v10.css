@@ -315,6 +315,7 @@ body.leagueSimulatorMode .historyDock{display:none!important}
 
 /* What-if Scenario workspace */
 .leagueNormalContent{display:grid;min-width:0;gap:14px}
+.leagueNormalContent>*{min-width:0}
 .leagueNormalContent[hidden],.whatIfView[hidden],.whatIfComparison[hidden]{display:none!important}
 .leagueHeroActions{display:grid;justify-items:stretch;gap:8px;flex:0 0 auto}
 .whatIfEntry{min-height:42px;border-color:#9a7c22;background:#29230f;color:#f4dc69}
@@ -392,7 +393,9 @@ body.leagueSimulatorMode .historyDock{display:none!important}
   .whatIfHeaderActions{grid-template-columns:repeat(3,1fr)}
   .whatIfControlPanel,.whatIfFixturePanel,.whatIfComparison{padding:10px}
   .whatIfHeadlineResults{grid-template-columns:1fr}
-  .leagueHeroActions{width:100%}
+  .leagueHero{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch}
+  .leagueHeroActions{grid-row:1;width:100%}
+  .leagueHeroActions .leagueSnapshotStatus{margin-top:0}
 }
 @media(max-width:380px){
   .whatIfHeaderActions{grid-template-columns:1fr 1fr}

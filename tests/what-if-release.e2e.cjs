@@ -5,7 +5,7 @@ const {startStaticServer} = require('./static-server.cjs');
 let BASE_URL = process.env.WHAT_IF_E2E_URL;
 const STORE_KEY = 'tigersProbability.whatIf.store.v1';
 const PRESERVED_KEYS = ['tigersGameStateV1', 'tigersObservedLearningV1', 'tigersLeagueSimulatorOverridesV1'];
-const RELEASE_CACHE = 'tigers-probability-production-v4.0.0-20260917-1';
+const RELEASE_CACHE = 'tigers-probability-production-v4.0.1-20260917-1';
 
 function stablePreserved(values) {
   return {...values, tigersGameStateV1: JSON.parse(values.tigersGameStateV1).state};
@@ -55,7 +55,7 @@ async function run() {
   try {
     await page.goto(BASE_URL, {waitUntil: 'commit', timeout: 90000});
     await page.waitForFunction(() => document.readyState === 'complete', undefined, {timeout: 90000});
-    assert.match(await page.locator('header .sub').textContent(), /v4\.0\.0/);
+    assert.match(await page.locator('header .sub').textContent(), /v4\.0\.1/);
     await waitForProbability(page);
     assert(await page.locator('#predictionCard').isVisible());
     assert(await page.locator('#winBig').isVisible());
@@ -123,7 +123,7 @@ async function run() {
       const cache = await caches.open(cacheName);
       return (await cache.keys()).map(request => new URL(request.url).pathname + new URL(request.url).search);
     }, RELEASE_CACHE);
-    for (const asset of ['index.html', 'v10.css?v=production-v4.0.0-1', 'app-v10.js?v=production-v4.0.0-1', 'league-data-2026.mjs', 'what-if-base-context.mjs', 'what-if-scenario.mjs', 'scenario-store.mjs', 'what-if-simulator.mjs', 'league-simulator-core.mjs?v=production-v4.0.0-1', 'league-simulator-ui.mjs?v=production-v4.0.0-1']) {
+    for (const asset of ['index.html', 'v10.css?v=production-v4.0.1-1', 'app-v10.js?v=production-v4.0.1-1', 'league-data-2026.mjs', 'what-if-base-context.mjs', 'what-if-scenario.mjs', 'scenario-store.mjs', 'what-if-simulator.mjs', 'league-simulator-core.mjs?v=production-v4.0.0-1', 'league-simulator-ui.mjs?v=production-v4.0.1-1']) {
       assert(cached.some(url => url.endsWith(asset)), `PWA cache missing ${asset}`);
     }
 
@@ -134,7 +134,7 @@ async function run() {
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(BASE_URL, {waitUntil: 'commit', timeout: 90000});
     await page.waitForFunction(() => document.readyState === 'complete', undefined, {timeout: 90000});
-    assert.match(await page.locator('header .sub').textContent(), /v4\.0\.0/);
+    assert.match(await page.locator('header .sub').textContent(), /v4\.0\.1/);
     await waitForProbability(page);
     await openLeague(page);
     await page.click('#openWhatIf');
