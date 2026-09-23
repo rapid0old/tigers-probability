@@ -305,13 +305,17 @@ a{color:#b7cfff}
 </div>
 
 <main id="leagueSimulatorView" class="leagueSimulatorView" hidden>
+<div id="leagueNormalContent" class="leagueNormalContent">
   <section class="leagueHero">
     <div>
       <span class="leagueEyebrow">League Baseline Model v1</span>
       <h2>優勝・CS確率</h2>
       <p>2026年9月17日終了時点の公式結果と残り日程を、12球団共通の固定Eloで計算します。</p>
     </div>
-    <div class="leagueSnapshotStatus"><span>基準日</span><strong>2026.09.17</strong></div>
+    <div class="leagueHeroActions">
+      <div class="leagueSnapshotStatus"><span>基準日</span><strong>2026.09.17</strong></div>
+      <button id="openWhatIf" class="whatIfEntry" type="button">What-if</button>
+    </div>
   </section>
 
   <section class="leagueControls" aria-label="シミュレーション設定">
@@ -358,7 +362,66 @@ a{color:#b7cfff}
     <summary>モデル仕様・データ出典</summary>
     <div id="leagueModelDetails" class="leagueModelDetails"></div>
   </details>
+</div>
+
+<section id="whatIfView" class="whatIfView" hidden aria-labelledby="whatIfModeTitle">
+  <header class="whatIfHeader">
+    <div class="whatIfIdentity">
+      <span class="whatIfModeLabel" id="whatIfModeTitle">What-if：仮想シナリオ</span>
+      <label for="whatIfScenarioName">Scenario名</label>
+      <input id="whatIfScenarioName" type="text" maxlength="80" autocomplete="off">
+      <div id="whatIfBaseMeta" class="whatIfBaseMeta"></div>
+    </div>
+    <div class="whatIfHeaderActions">
+      <button id="saveWhatIfScenario" class="primary" type="button">保存</button>
+      <button id="manageWhatIfScenarios" type="button">保存済み</button>
+      <button id="exitWhatIf" type="button">What-ifを終了</button>
+    </div>
+  </header>
+
+  <section class="whatIfControlPanel" aria-label="What-if計算設定">
+    <div class="whatIfFixtureFilter" role="group" aria-label="表示する試合">
+      <button id="whatIfTigersOnly" class="active" type="button">阪神戦のみ</button>
+      <button id="whatIfAllGames" type="button">全試合</button>
+    </div>
+    <div class="whatIfRunMeta">
+      <span id="whatIfAssumptionCount">仮定：0試合</span>
+      <span id="whatIfSimulationMeta"></span>
+    </div>
+    <button id="runWhatIfSimulation" class="primary whatIfRunButton" type="button">この条件で再計算</button>
+    <div id="whatIfRunStatus" class="leagueRunStatus" aria-live="polite">条件を選んで再計算してください</div>
+  </section>
+
+  <section class="whatIfFixturePanel" aria-labelledby="whatIfFixtureTitle">
+    <div class="leagueSectionHead"><div><span>残り試合</span><h3 id="whatIfFixtureTitle">仮想結果を選択</h3></div></div>
+    <div id="whatIfFixtureList" class="whatIfFixtureList"></div>
+  </section>
+
+  <section id="whatIfComparison" class="whatIfComparison" aria-labelledby="whatIfComparisonTitle" hidden>
+    <div class="leagueSectionHead"><div><span>通常との比較</span><h3 id="whatIfComparisonTitle">阪神への影響</h3></div><div id="whatIfResultState" class="whatIfResultState"></div></div>
+    <div id="whatIfHeadlineResults" class="whatIfHeadlineResults"></div>
+    <div class="leagueTableScroll">
+      <table class="whatIfComparisonTable">
+        <thead><tr><th>球団</th><th>項目</th><th>通常</th><th>What-if</th><th>差分</th></tr></thead>
+        <tbody id="whatIfComparisonBody"></tbody>
+      </table>
+    </div>
+    <details class="whatIfRankDetails">
+      <summary>阪神の順位分布</summary>
+      <div class="leagueTableScroll"><table class="whatIfRankTable"><thead><tr><th></th><th>1位</th><th>2位</th><th>3位</th><th>4位</th><th>5位</th><th>6位</th></tr></thead><tbody id="whatIfRankBody"></tbody></table></div>
+    </details>
+  </section>
+</section>
 </main>
+
+<dialog id="whatIfStartDialog" class="whatIfDialog">
+  <div class="dialogHeader"><strong>What-if Scenario</strong><button id="closeWhatIfDialog" type="button" aria-label="閉じる">×</button></div>
+  <label for="newWhatIfName">新規Scenario名</label>
+  <input id="newWhatIfName" type="text" maxlength="80" autocomplete="off">
+  <button id="createWhatIfScenario" class="primary whatIfCreateButton" type="button">現在時点から新規作成</button>
+  <div class="whatIfSavedHeading">保存済みScenario</div>
+  <div id="whatIfSavedList" class="whatIfSavedList"></div>
+</dialog>
 </div>
 <div class="probDock" id="probDock" aria-label="確率サマリー" aria-live="polite">
   <button data-detail="run"><span class="dockLabel">この回1点+</span><span class="dockValue" id="dockRunProb">--%</span></button>

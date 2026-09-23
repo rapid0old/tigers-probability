@@ -164,6 +164,17 @@ export function withoutScenarioOverride(scenario, gameId, {now = () => new Date(
   return deepFreeze(updated);
 }
 
+export function renameScenario(scenario, name, {now = () => new Date().toISOString()} = {}) {
+  validateScenario(scenario);
+  const timestamp = now();
+  assertTimestamp(timestamp, 'updated_at');
+  const updated = cloneValue(scenario);
+  updated.name = String(name || '').trim();
+  updated.updated_at = timestamp;
+  validateScenario(updated);
+  return deepFreeze(updated);
+}
+
 export function resolveScenarioInput(baseContext, scenarioOverrides, simulationSettings = {}) {
   assertBaseReference(baseContext);
   const overlays = normalizeOverrideCollection(scenarioOverrides);

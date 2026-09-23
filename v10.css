@@ -312,3 +312,85 @@ body.leagueSimulatorMode .historyDock{display:none!important}
   .leagueFixtureGroup>summary{padding:8px}
   .leagueFixtureDay .leagueFixtureMeta{grid-template-columns:42px minmax(0,1fr)}
 }
+
+/* What-if Scenario workspace */
+.leagueNormalContent{display:grid;min-width:0;gap:14px}
+.leagueNormalContent[hidden],.whatIfView[hidden],.whatIfComparison[hidden]{display:none!important}
+.leagueHeroActions{display:grid;justify-items:stretch;gap:8px;flex:0 0 auto}
+.whatIfEntry{min-height:42px;border-color:#9a7c22;background:#29230f;color:#f4dc69}
+.whatIfView{display:grid;min-width:0;gap:12px;padding-bottom:24px}
+.whatIfHeader{position:sticky;z-index:12;top:0;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;padding:12px 14px;border:1px solid #6f5e22;border-left:4px solid var(--accent);background:#19170f;box-shadow:0 8px 24px rgba(0,0,0,.38)}
+.whatIfIdentity{min-width:0}
+.whatIfModeLabel{display:block;color:#f3da5c;font-size:12px;font-weight:900}
+.whatIfIdentity label{margin:6px 0 3px;color:#aaa79a;font-size:10px}
+.whatIfIdentity input,.whatIfDialog input{width:100%;min-height:42px;padding:8px 10px;border:1px solid #655a31;border-radius:6px;background:#0f0f10;color:#fff;font-size:16px}
+.whatIfBaseMeta{margin-top:5px;color:#aaa79a;font-size:10px;line-height:1.4}
+.whatIfHeaderActions{display:grid;grid-template-columns:repeat(3,minmax(84px,1fr));gap:6px;align-content:center}
+.whatIfHeaderActions button{min-height:42px;padding:7px 8px;border-radius:6px;font-size:12px}
+.whatIfControlPanel,.whatIfFixturePanel,.whatIfComparison{min-width:0;padding:14px;border:1px solid #3f3d34;background:#171719}
+.whatIfFixtureFilter{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.whatIfFixtureFilter button{min-height:42px;border-radius:6px}
+.whatIfFixtureFilter button.active{background:#f0d83e;color:#111}
+.whatIfRunMeta{display:flex;justify-content:space-between;gap:10px;margin:11px 0 8px;color:#b7b7bd;font-size:12px}
+.whatIfRunMeta span:first-child{color:#f0d85a;font-weight:850}
+.whatIfRunButton{width:100%;min-height:48px;border-radius:6px}
+.whatIfFixtureList{display:grid;gap:8px}
+.whatIfFixtureGroup{margin:0;padding:0;border:1px solid #3b3b40;border-radius:6px;overflow:hidden}
+.whatIfFixtureGroup>summary{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 10px;list-style:none;background:#202024;font-size:13px;font-weight:850}
+.whatIfFixtureGroup>summary::-webkit-details-marker{display:none}
+.whatIfFixtureGroup>summary::before{content:'▶';color:#d7c767;font-size:10px}
+.whatIfFixtureGroup[open]>summary::before{content:'▼'}
+.whatIfFixtureGroup>summary small{margin-left:auto;color:#aaaab2;font-size:10px;font-weight:600}
+.whatIfFixtureGroupBody{display:grid;gap:7px;padding:7px}
+.whatIfFixtureRow{padding:10px;border-left:3px solid #4b4b52;background:#111113}
+.whatIfFixtureRow.tigersFixture{border-left-color:var(--accent);background:#1c1a0f}
+.whatIfFixtureRow.hasAssumption{border-left-color:#62bd7d;background:#122019}
+.whatIfFixtureRow.isCanceled{border-left-color:#d49d46;background:#201a12}
+.whatIfFixtureTop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.whatIfFixtureTeams{min-width:0;font-size:13px;font-weight:850}
+.whatIfFixtureTeams small{display:block;margin-top:3px;color:#929299;font-size:10px;font-weight:500}
+.whatIfFixtureDate{flex:0 0 auto;color:#d7c767;font-size:11px;font-weight:800}
+.whatIfBaseOverride{display:block;margin:0 0 7px;color:#9fb8d7;font-size:10px}
+.whatIfOutcomeGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.whatIfOutcomeGrid button{min-width:0;min-height:40px;padding:7px 5px;border-radius:6px;font-size:11px;line-height:1.2}
+.whatIfOutcomeGrid button.active{background:#f0d83e;color:#111;border-color:#f0d83e}
+.whatIfCancelButton{width:100%;min-height:36px;margin-top:5px;padding:6px;border-radius:6px;color:#d8bd8f;font-size:10px}
+.whatIfCancelButton.active{background:#5c4219;color:#ffe0a7;border-color:#9a7132}
+.whatIfResultState{color:#9cd5aa;font-size:11px;font-weight:850}
+.whatIfResultState.stale{color:#ffd27b}
+.whatIfHeadlineResults{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.whatIfHeadlineItem{padding:10px;border-left:3px solid #5c5c63;background:#111113}
+.whatIfHeadlineItem span{display:block;color:#9f9fa6;font-size:10px}
+.whatIfHeadlineItem strong{display:block;margin-top:5px;color:#f3f3f4;font-size:20px}
+.whatIfHeadlineItem small{display:block;margin-top:3px;color:#f0d85a;font-size:11px}
+.whatIfComparisonTable,.whatIfRankTable{width:100%;min-width:610px;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.whatIfComparisonTable th,.whatIfComparisonTable td,.whatIfRankTable th,.whatIfRankTable td{padding:9px;border-bottom:1px solid #34343a;text-align:right;white-space:nowrap}
+.whatIfComparisonTable th:first-child,.whatIfComparisonTable td:first-child,.whatIfComparisonTable th:nth-child(2),.whatIfComparisonTable td:nth-child(2),.whatIfRankTable th:first-child{text-align:left}
+.whatIfComparisonTable .positive,.whatIfRankTable .positive{color:#8fd5a3}
+.whatIfComparisonTable .negative,.whatIfRankTable .negative{color:#f0a0a0}
+.whatIfRankDetails{margin-top:12px}
+.whatIfRankDetails>summary{min-height:42px;padding:10px 0}
+.whatIfDialog{width:min(540px,calc(100% - 20px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;color:#eee;background:#18181b;border:1px solid #5d5d64;border-radius:8px}
+.whatIfDialog::backdrop{background:rgba(0,0,0,.76)}
+.whatIfCreateButton{width:100%;min-height:46px;margin-top:10px;border-radius:6px}
+.whatIfSavedHeading{margin:18px 0 8px;color:#d5d5da;font-size:12px;font-weight:850}
+.whatIfSavedList{display:grid;gap:7px}
+.whatIfSavedEmpty{padding:16px 4px;color:#909097;text-align:center;font-size:12px}
+.whatIfSavedRow{padding:10px;border:1px solid #3a3a40;background:#111113}
+.whatIfSavedMeta strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.whatIfSavedMeta span{display:block;margin-top:4px;color:#929299;font-size:10px}
+.whatIfSavedActions{display:grid;grid-template-columns:1fr auto auto;gap:5px;margin-top:9px}
+.whatIfSavedActions button{min-height:38px;padding:6px 8px;border-radius:6px;font-size:11px}
+.whatIfSavedActions .danger{background:#352020}
+@media(max-width:600px){
+  .whatIfHeader{grid-template-columns:1fr;padding:10px;top:0}
+  .whatIfHeaderActions{grid-template-columns:repeat(3,1fr)}
+  .whatIfControlPanel,.whatIfFixturePanel,.whatIfComparison{padding:10px}
+  .whatIfHeadlineResults{grid-template-columns:1fr}
+  .leagueHeroActions{width:100%}
+}
+@media(max-width:380px){
+  .whatIfHeaderActions{grid-template-columns:1fr 1fr}
+  .whatIfHeaderActions #exitWhatIf{grid-column:1/-1}
+  .whatIfRunMeta{display:grid;gap:3px}
+}

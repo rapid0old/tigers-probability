@@ -12,6 +12,7 @@ import {
   WHAT_IF_ARTIFACT_TYPE,
   WHAT_IF_OUTCOMES,
   createScenario,
+  renameScenario,
   getScenarioOverrideOutcome,
   isCalibrationEligibleArtifact,
   isWhatIfScenario,
@@ -147,6 +148,15 @@ test('1. Scenarioを新規作成できる', () => {
 test('2. crypto.randomUUID形式のIDが付与される', () => {
   const scenario = createScenario(scenarioInput(), {now: () => CREATED_AT});
   assert.match(scenario.scenario_id, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+});
+
+test('2a. Scenario名をimmutableに変更できる', () => {
+  const original = fixedScenario();
+  const renamed = renameScenario(original, '阪神3連勝', {now: () => UPDATED_AT});
+  assert.equal(original.name, '残り試合の仮想結果');
+  assert.equal(renamed.name, '阪神3連勝');
+  assert.equal(renamed.updated_at, UPDATED_AT);
+  assert.throws(() => renameScenario(original, '   ', {now: () => UPDATED_AT}), /Scenario name is required/);
 });
 
 test('3-5. Repositoryでsave/get/list/deleteできる', () => {
