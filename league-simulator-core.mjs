@@ -306,6 +306,158 @@ function normalizeOverrides(overrides) {
   return Object.fromEntries(Object.entries(overrides).map(([gameId, value]) => [gameId, typeof value === 'string' ? value : value?.result]));
 }
 
+const PREPARED_STATE_KEYS = Object.freeze([
+  'wins',
+  'losses',
+  'ties',
+  'leagueWins',
+  'leagueLosses',
+  'leagueTies',
+  'h2hWins',
+  'h2hLosses',
+  'h2hTies',
+]);
+
+function normalizePreparedState(state, teamCount) {
+  const normalized = {};
+  for (const key of PREPARED_STATE_KEYS) {
+    const expectedLength = key.startsWith('h2h') ? teamCount * teamCount : teamCount;
+    const values = Array.from(state?.[key] || []);
+    if (values.length !== expectedLength || values.some(value => !Number.isInteger(value) || value < 0 || value > 65535)) {
+      throw new Error(`Invalid prepared state: ${key}`);
+    }
+    normalized[key] = Uint16Array.from(values);
+  }
+  return normalized;
+}
+
+function normalizePreparedFixture(entry, teamCount) {
+  const homeIndex = entry.homeIndex ?? entry.home_index;
+  const awayIndex = entry.awayIndex ?? entry.away_index;
+  const sameLeague = entry.sameLeague ?? entry.same_league;
+  if (!entry?.game?.id || !Number.isInteger(homeIndex) || !Number.isInteger(awayIndex)
+    || homeIndex < 0 || homeIndex >= teamCount || awayIndex < 0 || awayIndex >= teamCount || homeIndex === awayIndex
+    || typeof sameLeague !== 'boolean') {
+    throw new Error(`Invalid prepared fixture: ${entry?.game?.id || ''}`);
+  }
+  const probabilities = {...entry.probabilities};
+  const {homeWin, awayWin, tie} = probabilities;
+  if (![homeWin, awayWin, tie].every(value => Number.isFinite(value) && value >= 0)
+    || Math.abs(homeWin + awayWin + tie - 1) > 1e-10) {
+    throw new Error(`Invalid probabilities for ${entry.game.id}`);
+  }
+  return {
+    game: {...entry.game},
+    homeIndex,
+    awayIndex,
+    sameLeague: Boolean(sameLeague),
+    probabilities,
+  };
+}
+
+export function prepareSeasonSimulation({teams, baseState, remaining, overrides = {}}) {
+  if (!Array.isArray(teams) || !teams.length) throw new Error('Prepared teams are required');
+  if (!Array.isArray(remaining)) throw new Error('Prepared remaining fixtures are required');
+  const teamCount = teams.length;
+  const state = normalizePreparedState(baseState, teamCount);
+  const normalizedOverrides = normalizeOverrides(overrides);
+  const preparedRemaining = [];
+  const overrideReport = [];
+  const knownIds = new Set();
+
+  for (const sourceEntry of remaining) {
+    const entry = normalizePreparedFixture(sourceEntry, teamCount);
+    if (knownIds.has(entry.game.id)) throw new Error(`Duplicate prepared fixture: ${entry.game.id}`);
+    knownIds.add(entry.game.id);
+    const override = normalizedOverrides[entry.game.id];
+    if (VALID_RESULTS.has(override)) {
+      applyResult(state, entry.homeIndex, entry.awayIndex, override, entry.sameLeague, teamCount);
+      overrideReport.push({gameId: entry.game.id, status: 'APPLIED', override});
+    } else {
+      if (override === CANCELED_OVERRIDE) overrideReport.push({gameId: entry.game.id, status: 'PENDING_RESCHEDULE', override});
+      preparedRemaining.push(entry);
+    }
+  }
+  for (const [gameId, override] of Object.entries(normalizedOverrides)) {
+    if (!knownIds.has(gameId)) overrideReport.push({gameId, status: 'UNKNOWN_GAME', override});
+  }
+  return {baseState: state, remaining: preparedRemaining, overrideReport};
+}
+
+export function simulatePreparedSeason({
+  teams,
+  baseState,
+  remaining,
+  overrideReport = [],
+  iterations = 50000,
+  seed = 'league-baseline-v1',
+  modelVersion = 'GameProbabilityModel',
+  snapshotThrough = '',
+}) {
+  if (!Array.isArray(teams) || !teams.length) throw new Error('Prepared teams are required');
+  const simulationCount = Number(iterations);
+  if (!Number.isInteger(simulationCount) || simulationCount < 1 || simulationCount > 200000) throw new Error('iterations must be an integer from 1 to 200000');
+  const teamCount = teams.length;
+  const initialState = normalizePreparedState(baseState, teamCount);
+  const preparedRemaining = remaining.map(entry => normalizePreparedFixture(entry, teamCount));
+  const leagueIndices = Object.fromEntries(Object.values(LEAGUES).map(league => [league, teams.map((team, index) => team.league === league ? index : -1).filter(index => index >= 0)]));
+  const random = createSeededRandom(seed);
+  const rankCounts = new Uint32Array(teamCount * 6);
+  const winTotals = new Float64Array(teamCount);
+  const lossTotals = new Float64Array(teamCount);
+  const tieTotals = new Float64Array(teamCount);
+  const rankTotals = new Float64Array(teamCount);
+
+  for (let iteration = 0; iteration < simulationCount; iteration += 1) {
+    const state = cloneState(initialState);
+    for (const entry of preparedRemaining) {
+      const roll = random();
+      const result = roll < entry.probabilities.homeWin
+        ? GAME_RESULTS.HOME_WIN
+        : roll < entry.probabilities.homeWin + entry.probabilities.awayWin
+          ? GAME_RESULTS.AWAY_WIN
+          : GAME_RESULTS.TIE;
+      applyResult(state, entry.homeIndex, entry.awayIndex, result, entry.sameLeague, teamCount);
+    }
+    for (const league of Object.values(LEAGUES)) {
+      const ranking = rankLeague(leagueIndices[league], state, teams, league, teamCount);
+      ranking.forEach((teamIndex, rankIndex) => {
+        rankCounts[teamIndex * 6 + rankIndex] += 1;
+        rankTotals[teamIndex] += rankIndex + 1;
+      });
+    }
+    for (let teamIndex = 0; teamIndex < teamCount; teamIndex += 1) {
+      winTotals[teamIndex] += state.wins[teamIndex];
+      lossTotals[teamIndex] += state.losses[teamIndex];
+      tieTotals[teamIndex] += state.ties[teamIndex];
+    }
+  }
+
+  const resultTeams = teams.map((team, teamIndex) => {
+    const rankProbabilities = Array.from({length: 6}, (_, rankIndex) => rankCounts[teamIndex * 6 + rankIndex] / simulationCount * 100);
+    return {
+      ...team,
+      championProbability: rankProbabilities[0],
+      csProbability: rankProbabilities.slice(0, 3).reduce((sum, value) => sum + value, 0),
+      rankProbabilities,
+      expectedWins: winTotals[teamIndex] / simulationCount,
+      expectedLosses: lossTotals[teamIndex] / simulationCount,
+      expectedTies: tieTotals[teamIndex] / simulationCount,
+      expectedRank: rankTotals[teamIndex] / simulationCount,
+    };
+  });
+  return {
+    modelVersion,
+    snapshotThrough,
+    iterations: simulationCount,
+    seed: String(seed),
+    remainingGames: preparedRemaining.length,
+    overriddenGames: overrideReport.filter(item => item.status === 'APPLIED').length,
+    overrideReport: overrideReport.map(item => ({...item})),
+    teams: resultTeams,
+  };
+}
+
 export class SeasonSimulator {
   constructor({snapshot, probabilityModel}) {
     validateSnapshot(snapshot);
@@ -355,64 +507,17 @@ export class SeasonSimulator {
   }
 
   simulate({iterations = 50000, seed = 'league-baseline-v1', overrides = {}} = {}) {
-    const simulationCount = Number(iterations);
-    if (!Number.isInteger(simulationCount) || simulationCount < 1 || simulationCount > 200000) throw new Error('iterations must be an integer from 1 to 200000');
     const {baseState, remaining, overrideReport} = this.prepare(overrides);
-    const random = createSeededRandom(seed);
-    const rankCounts = new Uint32Array(this.teamCount * 6);
-    const winTotals = new Float64Array(this.teamCount);
-    const lossTotals = new Float64Array(this.teamCount);
-    const tieTotals = new Float64Array(this.teamCount);
-    const rankTotals = new Float64Array(this.teamCount);
-
-    for (let iteration = 0; iteration < simulationCount; iteration += 1) {
-      const state = cloneState(baseState);
-      for (const entry of remaining) {
-        const roll = random();
-        const result = roll < entry.probabilities.homeWin
-          ? GAME_RESULTS.HOME_WIN
-          : roll < entry.probabilities.homeWin + entry.probabilities.awayWin
-            ? GAME_RESULTS.AWAY_WIN
-            : GAME_RESULTS.TIE;
-        applyResult(state, entry.homeIndex, entry.awayIndex, result, entry.sameLeague, this.teamCount);
-      }
-      for (const league of Object.values(LEAGUES)) {
-        const ranking = rankLeague(this.leagueIndices[league], state, this.teams, league, this.teamCount);
-        ranking.forEach((teamIndex, rankIndex) => {
-          rankCounts[teamIndex * 6 + rankIndex] += 1;
-          rankTotals[teamIndex] += rankIndex + 1;
-        });
-      }
-      for (let teamIndex = 0; teamIndex < this.teamCount; teamIndex += 1) {
-        winTotals[teamIndex] += state.wins[teamIndex];
-        lossTotals[teamIndex] += state.losses[teamIndex];
-        tieTotals[teamIndex] += state.ties[teamIndex];
-      }
-    }
-
-    const teams = this.teams.map((team, teamIndex) => {
-      const rankProbabilities = Array.from({length: 6}, (_, rankIndex) => rankCounts[teamIndex * 6 + rankIndex] / simulationCount * 100);
-      return {
-        ...team,
-        championProbability: rankProbabilities[0],
-        csProbability: rankProbabilities.slice(0, 3).reduce((sum, value) => sum + value, 0),
-        rankProbabilities,
-        expectedWins: winTotals[teamIndex] / simulationCount,
-        expectedLosses: lossTotals[teamIndex] / simulationCount,
-        expectedTies: tieTotals[teamIndex] / simulationCount,
-        expectedRank: rankTotals[teamIndex] / simulationCount,
-      };
-    });
-    return {
+    return simulatePreparedSeason({
+      teams: this.teams,
+      baseState,
+      remaining,
+      overrideReport,
+      iterations,
+      seed,
       modelVersion: this.probabilityModel.modelVersion || 'GameProbabilityModel',
       snapshotThrough: this.snapshot.through,
-      iterations: simulationCount,
-      seed: String(seed),
-      remainingGames: remaining.length,
-      overriddenGames: overrideReport.filter(item => item.status === 'APPLIED').length,
-      overrideReport,
-      teams,
-    };
+    });
   }
 }
 
