@@ -51,13 +51,10 @@ function assertOutcome(outcome) {
   if (!VALID_OUTCOMES.has(outcome)) throw new Error(`Unsupported What-if outcome: ${outcome}`);
 }
 
-function assertSnapshot(snapshot) {
-  if (!snapshot || !Array.isArray(snapshot.teams) || !Array.isArray(snapshot.games)) throw new Error('base_context.snapshot must contain teams and games');
-  const ids = new Set();
-  for (const game of snapshot.games) {
-    if (!game?.id || ids.has(game.id)) throw new Error(`Duplicate or missing fixture id: ${game?.id || ''}`);
-    ids.add(game.id);
-  }
+function assertBaseReference(baseContext, expectedId = '') {
+  if (!baseContext || typeof baseContext !== 'object' || typeof baseContext.base_context_id !== 'string') throw new Error('A frozen base context is required');
+  if (expectedId && baseContext.base_context_id !== expectedId) throw new Error('Scenario and base context do not match');
+  if (!Array.isArray(baseContext.remaining_fixtures) || !Array.isArray(baseContext.normal_overrides)) throw new Error('Invalid frozen base context');
 }
 
 function normalizeOverrideRecord(record, fallbackGameId = '') {
@@ -94,15 +91,12 @@ export function validateScenario(scenario) {
   if (typeof scenario.name !== 'string' || !scenario.name.trim()) throw new Error('Scenario name is required');
   assertTimestamp(scenario.created_at, 'created_at');
   assertTimestamp(scenario.updated_at, 'updated_at');
+  if (typeof scenario.base_context_id !== 'string' || !scenario.base_context_id) throw new Error('base_context_id is required');
   if (typeof scenario.base_snapshot_date !== 'string' || !scenario.base_snapshot_date) throw new Error('base_snapshot_date is required');
   if (typeof scenario.base_dataset_id !== 'string' || !scenario.base_dataset_id) throw new Error('base_dataset_id is required');
   if (typeof scenario.league !== 'string' || !scenario.league) throw new Error('league is required');
   if (typeof scenario.focus_team_id !== 'string' || !scenario.focus_team_id) throw new Error('focus_team_id is required');
-  if (!scenario.base_context || typeof scenario.base_context !== 'object') throw new Error('base_context is required');
-  assertSnapshot(scenario.base_context.snapshot);
-  const baseOverrides = normalizeOverrideCollection(scenario.base_context.normal_overrides);
   const scenarioOverrides = normalizeOverrideCollection(scenario.game_overrides);
-  assertUniqueOverrides(baseOverrides);
   assertUniqueOverrides(scenarioOverrides);
   if (!scenario.simulation_settings || typeof scenario.simulation_settings !== 'object') throw new Error('simulation_settings is required');
   return true;
@@ -110,19 +104,14 @@ export function validateScenario(scenario) {
 
 export function createScenario({
   name,
-  snapshot,
-  baseSnapshotDate,
-  baseDatasetId,
+  baseContext,
   league,
   focusTeamId,
-  normalOverrides = {},
   simulationSettings,
 }, {idFactory = createUuid, now = () => new Date().toISOString()} = {}) {
-  assertSnapshot(snapshot);
+  assertBaseReference(baseContext);
   const timestamp = now();
   assertTimestamp(timestamp, 'created_at');
-  const baseNormalOverrides = normalizeOverrideCollection(normalOverrides);
-  assertUniqueOverrides(baseNormalOverrides);
   const scenario = {
     artifact_type: WHAT_IF_ARTIFACT_TYPE,
     schema_version: WHAT_IF_SCHEMA_VERSION,
@@ -130,14 +119,11 @@ export function createScenario({
     name: String(name || '').trim(),
     created_at: timestamp,
     updated_at: timestamp,
-    base_snapshot_date: baseSnapshotDate,
-    base_dataset_id: baseDatasetId,
+    base_context_id: baseContext.base_context_id,
+    base_snapshot_date: baseContext.base_snapshot_date,
+    base_dataset_id: baseContext.base_dataset_id,
     league,
     focus_team_id: focusTeamId,
-    base_context: {
-      snapshot: cloneValue(snapshot),
-      normal_overrides: cloneValue(baseNormalOverrides),
-    },
     game_overrides: [],
     simulation_settings: cloneValue(simulationSettings),
   };
@@ -150,12 +136,13 @@ export function getScenarioOverrideOutcome(scenario, gameId) {
   return scenario.game_overrides.find(record => record.game_id === gameId)?.outcome ?? WHAT_IF_OUTCOMES.UNKNOWN;
 }
 
-export function withScenarioOverride(scenario, override, {now = () => new Date().toISOString()} = {}) {
+export function withScenarioOverride(scenario, baseContext, override, {now = () => new Date().toISOString()} = {}) {
   validateScenario(scenario);
+  assertBaseReference(baseContext, scenario.base_context_id);
   const timestamp = now();
   assertTimestamp(timestamp, 'updated_at');
   const normalized = normalizeOverrideRecord({...override, updated_at: override.updated_at ?? timestamp});
-  const knownIds = new Set(scenario.base_context.snapshot.games.map(game => game.id));
+  const knownIds = new Set(baseContext.remaining_fixtures.map(entry => entry.game.id));
   if (!knownIds.has(normalized.game_id)) throw new Error(`Unknown fixture in Scenario: ${normalized.game_id}`);
   const gameOverrides = scenario.game_overrides.filter(record => record.game_id !== normalized.game_id);
   gameOverrides.push(normalized);
@@ -177,28 +164,17 @@ export function withoutScenarioOverride(scenario, gameId, {now = () => new Date(
   return deepFreeze(updated);
 }
 
-export function resolveScenarioInput(frozenBaseContext, scenarioOverrides, simulationSettings = {}) {
-  if (!frozenBaseContext || typeof frozenBaseContext !== 'object') throw new Error('frozenBaseContext is required');
-  assertSnapshot(frozenBaseContext.snapshot);
-  const baseOverrides = normalizeOverrideCollection(frozenBaseContext.normal_overrides);
+export function resolveScenarioInput(baseContext, scenarioOverrides, simulationSettings = {}) {
+  assertBaseReference(baseContext);
   const overlays = normalizeOverrideCollection(scenarioOverrides);
-  assertUniqueOverrides(baseOverrides);
   assertUniqueOverrides(overlays);
-
-  const snapshot = cloneValue(frozenBaseContext.snapshot);
-  const gameById = new Map(snapshot.games.map(game => [game.id, game]));
-  const resolved = new Map(baseOverrides.map(record => [record.game_id, record.outcome]));
+  const knownIds = new Set(baseContext.remaining_fixtures.map(entry => entry.game.id));
+  const resolved = new Map(baseContext.normal_overrides.map(record => [record.game_id, record.outcome]));
   const resolutionReport = [];
 
   for (const record of overlays) {
-    const game = gameById.get(record.game_id);
-    if (!game) {
+    if (!knownIds.has(record.game_id)) {
       resolutionReport.push({game_id: record.game_id, status: 'UNKNOWN_GAME', outcome: record.outcome});
-      continue;
-    }
-    if (game.status === 'FINAL') {
-      resolved.delete(record.game_id);
-      resolutionReport.push({game_id: record.game_id, status: 'OFFICIAL_RESULT_PRECEDENCE', outcome: record.outcome});
       continue;
     }
     if (record.outcome === WHAT_IF_OUTCOMES.UNKNOWN) {
@@ -210,22 +186,24 @@ export function resolveScenarioInput(frozenBaseContext, scenarioOverrides, simul
     }
   }
 
-  for (const game of snapshot.games) {
-    if (game.status === 'FINAL') resolved.delete(game.id);
-  }
-
   const overrides = Object.fromEntries([...resolved].map(([gameId, outcome]) => [gameId, {result: outcome}]));
   return immutableClone({
-    snapshot,
+    base_context_id: baseContext.base_context_id,
+    teams: baseContext.teams,
+    official_state: baseContext.official_state,
+    remaining_fixtures: baseContext.remaining_fixtures,
+    model_snapshot: baseContext.model_snapshot,
+    ruleset_id: baseContext.ruleset_id,
     overrides,
     simulation_settings: cloneValue(simulationSettings),
     resolution_report: resolutionReport,
   });
 }
 
-export function resolveScenario(scenario) {
+export function resolveScenario(scenario, baseContext) {
   validateScenario(scenario);
-  return resolveScenarioInput(scenario.base_context, scenario.game_overrides, scenario.simulation_settings);
+  assertBaseReference(baseContext, scenario.base_context_id);
+  return resolveScenarioInput(baseContext, scenario.game_overrides, scenario.simulation_settings);
 }
 
 export function isCalibrationEligibleArtifact(record) {

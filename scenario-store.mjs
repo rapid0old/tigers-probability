@@ -1,4 +1,9 @@
 import {
+  baseContextsEqual,
+  cloneBaseContext,
+  validateBaseContext,
+} from './what-if-base-context.mjs';
+import {
   WHAT_IF_SCHEMA_VERSION,
   cloneScenario,
   validateScenario,
@@ -18,6 +23,7 @@ export class ScenarioStoreError extends Error {
 function emptyStore() {
   return {
     schema_version: WHAT_IF_SCHEMA_VERSION,
+    base_contexts: [],
     scenarios: [],
     last_opened_scenario_id: null,
   };
@@ -34,12 +40,22 @@ function validateStore(value) {
   if (value.schema_version !== WHAT_IF_SCHEMA_VERSION) {
     throw new ScenarioStoreError('UNSUPPORTED_SCHEMA', `Unsupported What-if store schema_version: ${value.schema_version}`);
   }
+  if (!Array.isArray(value.base_contexts)) throw new ScenarioStoreError('CORRUPT_STORE', 'What-if base_contexts must be an array');
   if (!Array.isArray(value.scenarios)) throw new ScenarioStoreError('CORRUPT_STORE', 'What-if scenarios must be an array');
-  const ids = new Set();
+
+  const baseIds = new Set();
+  for (const baseContext of value.base_contexts) {
+    validateBaseContext(baseContext);
+    if (baseIds.has(baseContext.base_context_id)) throw new ScenarioStoreError('CORRUPT_STORE', `Duplicate base context id: ${baseContext.base_context_id}`);
+    baseIds.add(baseContext.base_context_id);
+  }
+
+  const scenarioIds = new Set();
   for (const scenario of value.scenarios) {
     validateScenario(scenario);
-    if (ids.has(scenario.scenario_id)) throw new ScenarioStoreError('CORRUPT_STORE', `Duplicate Scenario id: ${scenario.scenario_id}`);
-    ids.add(scenario.scenario_id);
+    if (scenarioIds.has(scenario.scenario_id)) throw new ScenarioStoreError('CORRUPT_STORE', `Duplicate Scenario id: ${scenario.scenario_id}`);
+    if (!baseIds.has(scenario.base_context_id)) throw new ScenarioStoreError('CORRUPT_STORE', `Missing base context: ${scenario.base_context_id}`);
+    scenarioIds.add(scenario.scenario_id);
   }
   if (value.last_opened_scenario_id !== null && typeof value.last_opened_scenario_id !== 'string') {
     throw new ScenarioStoreError('CORRUPT_STORE', 'last_opened_scenario_id must be a string or null');
@@ -98,12 +114,40 @@ export class LocalScenarioRepository {
     return scenario ? cloneScenario(scenario) : null;
   }
 
-  save(scenario) {
+  getBaseContext(id) {
+    const baseContext = this.readStore().base_contexts.find(item => item.base_context_id === id);
+    return baseContext ? cloneBaseContext(baseContext) : null;
+  }
+
+  getBundle(id) {
+    const store = this.readStore();
+    const scenario = store.scenarios.find(item => item.scenario_id === id);
+    if (!scenario) return null;
+    const baseContext = store.base_contexts.find(item => item.base_context_id === scenario.base_context_id);
+    return {
+      scenario: cloneScenario(scenario),
+      base_context: cloneBaseContext(baseContext),
+    };
+  }
+
+  save(scenario, baseContext = null) {
     validateScenario(scenario);
+    if (baseContext) {
+      validateBaseContext(baseContext);
+      if (scenario.base_context_id !== baseContext.base_context_id) throw new ScenarioStoreError('BASE_MISMATCH', 'Scenario and base context do not match');
+    }
     const store = this.assertWritableStore();
+    const baseIndex = store.base_contexts.findIndex(item => item.base_context_id === scenario.base_context_id);
+    if (baseIndex < 0) {
+      if (!baseContext) throw new ScenarioStoreError('MISSING_BASE_CONTEXT', `Missing base context: ${scenario.base_context_id}`);
+      store.base_contexts.push(cloneBaseContext(baseContext));
+    } else if (baseContext && !baseContextsEqual(store.base_contexts[baseIndex], baseContext)) {
+      throw new ScenarioStoreError('BASE_ID_COLLISION', `Base context id collision: ${scenario.base_context_id}`);
+    }
+
     const saved = cloneScenario(scenario);
-    const index = store.scenarios.findIndex(item => item.scenario_id === scenario.scenario_id);
-    if (index >= 0) store.scenarios[index] = saved;
+    const scenarioIndex = store.scenarios.findIndex(item => item.scenario_id === scenario.scenario_id);
+    if (scenarioIndex >= 0) store.scenarios[scenarioIndex] = saved;
     else store.scenarios.push(saved);
     this.writeStore(store);
     return cloneScenario(saved);
@@ -113,9 +157,12 @@ export class LocalScenarioRepository {
     const store = this.assertWritableStore();
     const originalLength = store.scenarios.length;
     store.scenarios = store.scenarios.filter(scenario => scenario.scenario_id !== id);
+    if (store.scenarios.length === originalLength) return false;
     if (store.last_opened_scenario_id === id) store.last_opened_scenario_id = null;
-    if (store.scenarios.length !== originalLength) this.writeStore(store);
-    return store.scenarios.length !== originalLength;
+    const referencedBaseIds = new Set(store.scenarios.map(scenario => scenario.base_context_id));
+    store.base_contexts = store.base_contexts.filter(baseContext => referencedBaseIds.has(baseContext.base_context_id));
+    this.writeStore(store);
+    return true;
   }
 
   setLastOpenedScenarioId(id) {
