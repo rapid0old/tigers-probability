@@ -24,12 +24,13 @@ let runTimer = 0;
 let activeScenario = null;
 let activeBaseContext = null;
 let whatIfComparison = null;
-let whatIfComparisonStale = false;
 let whatIfDirty = false;
 let whatIfFilter = 'tigers';
 let whatIfCalculating = false;
+let whatIfCalculationState = 'idle';
 const baselineCache = new Map();
 const fixtureExpansion = new Map();
+const whatIfFixtureExpansion = new Map();
 
 const byId = id => document.getElementById(id);
 
@@ -211,8 +212,10 @@ function defaultScenarioName() {
 }
 
 function assumptionCount(scenario = activeScenario) {
-  return scenario?.game_overrides.filter(record => record.outcome !== WHAT_IF_OUTCOMES.UNKNOWN).length || 0;
+  return scenario?.game_overrides.filter(record => [WHAT_IF_OUTCOMES.HOME_WIN, WHAT_IF_OUTCOMES.AWAY_WIN, WHAT_IF_OUTCOMES.TIE].includes(record.outcome)).length || 0;
 }
+
+function conditionChangeCount(scenario = activeScenario) { return scenario?.game_overrides.length || 0; }
 
 function scenarioSettings() {
   return {model_id: 'league-baseline-v1', ruleset_id: 'npb-2026', iterations: Number(byId('leagueIterations').value), random_seed: byId('leagueRandomSeed').value || 'league-baseline-v1'};
@@ -225,24 +228,49 @@ function cacheCurrentNormalResult(baseContext, settings) {
   if (latestResult && latestResultInputFingerprint === currentFingerprint) baselineCache.set(baselineKey(baseContext, settings), latestResult);
 }
 
-function confirmUnsaved() { return !whatIfDirty || window.confirm('未保存の変更があります。保存せずに移動しますか？'); }
+function confirmUnsaved(message = '未保存の変更があります。保存せずに移動しますか？') { return !whatIfDirty || window.confirm(message); }
+
+function scenarioCalculationFingerprint(scenario, baseContext) {
+  return JSON.stringify({
+    base_context_id: baseContext?.base_context_id,
+    game_overrides: scenario?.game_overrides,
+    simulation_settings: scenario?.simulation_settings,
+  });
+}
+
+function setWhatIfDialogStatus(message = '', isError = false) {
+  const status = byId('whatIfDialogStatus');
+  status.textContent = message;
+  status.classList.toggle('error', isError);
+}
+
+function reportWhatIfError(action, error) {
+  console.error(error);
+  const message = `${action}できませんでした。保存データは変更されていません。`;
+  byId('whatIfRunStatus').textContent = message;
+  byId('whatIfRunStatus').classList.add('error');
+  setWhatIfDialogStatus(message, true);
+}
 
 function markWhatIfDirty({affectsCalculation = true} = {}) {
   whatIfDirty = true;
-  if (affectsCalculation && whatIfComparison) {
-    whatIfComparisonStale = true;
+  if (affectsCalculation) {
+    whatIfCalculationState = 'stale';
     byId('whatIfRunStatus').textContent = '条件が変更されています。再計算してください';
+    byId('whatIfRunStatus').classList.remove('error');
   }
   renderWhatIfSummary(); renderWhatIfComparison();
 }
 
 function enterWhatIf(baseContext, scenario, {dirty = false} = {}) {
   activeBaseContext = baseContext; activeScenario = scenario; whatIfDirty = dirty;
-  whatIfComparison = null; whatIfComparisonStale = false; whatIfFilter = 'tigers';
+  whatIfComparison = null; whatIfFilter = 'tigers';
+  whatIfCalculationState = 'idle'; whatIfFixtureExpansion.clear();
   document.body.classList.add('whatIfMode');
   byId('leagueNormalContent').hidden = true; byId('whatIfView').hidden = false;
   byId('whatIfScenarioName').value = scenario.name;
   byId('whatIfRunStatus').textContent = '条件を選んで再計算してください';
+  byId('whatIfRunStatus').classList.remove('error');
   byId('whatIfComparison').hidden = true;
   renderWhatIf(); window.scrollTo({top: 0, behavior: 'auto'});
 }
@@ -251,7 +279,8 @@ function exitWhatIf({force = false} = {}) {
   if (!activeScenario) return true;
   if (!force && !confirmUnsaved()) return false;
   activeScenario = null; activeBaseContext = null; whatIfComparison = null;
-  whatIfDirty = false; whatIfComparisonStale = false;
+  whatIfDirty = false;
+  whatIfCalculationState = 'idle'; whatIfFixtureExpansion.clear();
   document.body.classList.remove('whatIfMode');
   byId('whatIfView').hidden = true; byId('leagueNormalContent').hidden = false;
   renderResults(); renderFixtures();
@@ -259,6 +288,7 @@ function exitWhatIf({force = false} = {}) {
 }
 
 function createNewWhatIf() {
+  if (activeScenario && !confirmUnsaved('保存していない変更があります。破棄して新しいWhat-ifを作成しますか？')) return;
   const name = byId('newWhatIfName').value.trim() || defaultScenarioName();
   const settings = scenarioSettings();
   const baseContext = createBaseContext({snapshot: LEAGUE_SNAPSHOT_2026, probabilityModel: model, baseDatasetId: `npb-2026-${LEAGUE_SNAPSHOT_2026.through.replaceAll('-', '')}-v1`, normalOverrides: overrides});
@@ -268,44 +298,78 @@ function createNewWhatIf() {
 }
 
 function openSavedScenario(scenarioId) {
-  if (activeScenario && activeScenario.scenario_id !== scenarioId && !confirmUnsaved()) return;
-  const bundle = scenarioRepository.getBundle(scenarioId);
-  if (!bundle) return;
-  byId('whatIfStartDialog').close(); enterWhatIf(bundle.base_context, bundle.scenario);
+  if (activeScenario && !confirmUnsaved('保存していない変更があります。破棄して保存済みScenarioを開きますか？')) return;
+  try {
+    const bundle = scenarioRepository.getBundle(scenarioId);
+    const status = scenarioRepository.getStatus();
+    if (!status.ok) throw new Error(status.message);
+    if (!bundle) throw new Error('Scenarioが見つかりません');
+    setWhatIfDialogStatus();
+    byId('whatIfStartDialog').close(); enterWhatIf(bundle.base_context, bundle.scenario);
+  } catch (error) {
+    reportWhatIfError('Scenarioを読み込み', error);
+  }
 }
 
 function saveActiveScenario() {
   if (!activeScenario || !activeBaseContext) return;
-  scenarioRepository.save(activeScenario, activeBaseContext); whatIfDirty = false;
-  byId('whatIfRunStatus').textContent = whatIfComparisonStale ? '保存しました。条件を再計算してください' : 'Scenarioを保存しました';
-  renderWhatIfSummary(); renderSavedScenarios();
+  try {
+    scenarioRepository.save(activeScenario, activeBaseContext); whatIfDirty = false;
+    byId('whatIfRunStatus').classList.remove('error');
+    byId('whatIfRunStatus').textContent = whatIfCalculationState === 'stale' ? '保存しました。条件を再計算してください' : 'Scenarioを保存しました';
+    setWhatIfDialogStatus(); renderWhatIfSummary(); renderSavedScenarios();
+  } catch (error) {
+    reportWhatIfError('Scenarioを保存', error);
+    renderWhatIfSummary();
+  }
 }
 
 function deleteSavedScenario(scenarioId) {
-  const saved = scenarioRepository.get(scenarioId);
-  if (!saved || !window.confirm(`「${saved.name}」を削除しますか？`)) return;
-  const deletingActive = activeScenario?.scenario_id === scenarioId;
-  scenarioRepository.delete(scenarioId);
-  if (deletingActive) { whatIfDirty = false; exitWhatIf({force: true}); }
-  renderSavedScenarios();
+  try {
+    const saved = scenarioRepository.get(scenarioId);
+    const status = scenarioRepository.getStatus();
+    if (!status.ok) throw new Error(status.message);
+    if (!saved || !window.confirm(`「${saved.name}」を削除しますか？`)) return;
+    const deletingActive = activeScenario?.scenario_id === scenarioId;
+    scenarioRepository.delete(scenarioId);
+    if (deletingActive) { whatIfDirty = false; exitWhatIf({force: true}); }
+    setWhatIfDialogStatus(); renderSavedScenarios();
+  } catch (error) {
+    reportWhatIfError('Scenarioを削除', error);
+  }
 }
 
 function renameSavedScenario(scenarioId) {
-  const saved = scenarioRepository.get(scenarioId);
-  if (!saved) return;
-  const name = window.prompt('Scenario名', saved.name)?.trim();
-  if (!name || name === saved.name) return;
-  const baseContext = scenarioRepository.getBaseContext(saved.base_context_id);
-  const renamed = renameScenario(saved, name);
-  scenarioRepository.save(renamed, baseContext);
-  if (activeScenario?.scenario_id === scenarioId) { activeScenario = renamed; byId('whatIfScenarioName').value = renamed.name; whatIfDirty = false; }
-  renderSavedScenarios(); renderWhatIfSummary();
+  try {
+    const saved = scenarioRepository.get(scenarioId);
+    const status = scenarioRepository.getStatus();
+    if (!status.ok) throw new Error(status.message);
+    if (!saved) throw new Error('Scenarioが見つかりません');
+    const name = window.prompt('Scenario名', activeScenario?.scenario_id === scenarioId ? activeScenario.name : saved.name)?.trim();
+    if (!name || name === saved.name && activeScenario?.name === name) return;
+    const baseContext = scenarioRepository.getBaseContext(saved.base_context_id);
+    scenarioRepository.save(renameScenario(saved, name), baseContext);
+    if (activeScenario?.scenario_id === scenarioId) {
+      activeScenario = renameScenario(activeScenario, name);
+      byId('whatIfScenarioName').value = activeScenario.name;
+    }
+    setWhatIfDialogStatus(); renderSavedScenarios(); renderWhatIfSummary(); renderWhatIfComparison();
+  } catch (error) {
+    reportWhatIfError('Scenario名を変更', error);
+  }
 }
 
 function renderSavedScenarios() {
+  const status = scenarioRepository.getStatus();
+  if (!status.ok) {
+    setWhatIfDialogStatus('保存データを読み込めません。既存データは上書きされません。', true);
+    byId('whatIfSavedList').innerHTML = '<div class="whatIfSavedEmpty whatIfSavedError">保存データが破損しているため一覧を表示できません。</div>';
+    return;
+  }
+  setWhatIfDialogStatus();
   const scenarios = scenarioRepository.list().sort((a, b) => b.updated_at.localeCompare(a.updated_at));
   byId('whatIfSavedList').innerHTML = scenarios.length ? scenarios.map(scenario => `
-    <div class="whatIfSavedRow" data-scenario-id="${scenario.scenario_id}"><div class="whatIfSavedMeta"><strong>${escapeHtml(scenario.name)}</strong><span>作成 ${new Date(scenario.created_at).toLocaleString('ja-JP')}・基準 ${escapeHtml(scenario.base_snapshot_date)}・仮定 ${assumptionCount(scenario)}試合</span></div>
+    <div class="whatIfSavedRow" data-scenario-id="${scenario.scenario_id}"><div class="whatIfSavedMeta"><strong>${escapeHtml(scenario.name)}</strong><span>作成 ${new Date(scenario.created_at).toLocaleString('ja-JP')}・基準 ${escapeHtml(scenario.base_snapshot_date)}・仮定 ${assumptionCount(scenario)}試合・条件 ${conditionChangeCount(scenario)}件</span></div>
       <div class="whatIfSavedActions"><button type="button" data-saved-action="open">開く</button><button type="button" data-saved-action="rename">名前変更</button><button type="button" class="danger" data-saved-action="delete">削除</button></div></div>`).join('') : '<div class="whatIfSavedEmpty">保存済みScenarioはありません</div>';
 }
 
@@ -350,7 +414,7 @@ function renderWhatIfFixtureRow(entry) {
   const effective = record?.outcome || baseOutcome || WHAT_IF_OUTCOMES.UNKNOWN;
   const isTigers = game.homeTeamId === TEAM_TIGERS || game.awayTeamId === TEAM_TIGERS;
   const button = (outcome, label) => `<button type="button" class="${effective === outcome ? 'active' : ''}" data-game-id="${game.id}" data-what-if-outcome="${outcome}">${label}</button>`;
-  return `<div class="whatIfFixtureRow ${isTigers ? 'tigersFixture' : ''} ${record && record.outcome !== WHAT_IF_OUTCOMES.UNKNOWN ? 'hasAssumption' : ''} ${record?.outcome === WHAT_IF_OUTCOMES.CANCELED ? 'isCanceled' : ''}">
+  return `<div class="whatIfFixtureRow ${isTigers ? 'tigersFixture' : ''} ${record ? 'hasAssumption' : ''} ${record?.outcome === WHAT_IF_OUTCOMES.CANCELED ? 'isCanceled' : ''}">
     <div class="whatIfFixtureTop"><div class="whatIfFixtureTeams">${teamName(game.homeTeamId)} vs ${teamName(game.awayTeamId)}<small>${game.venue || '球場未定'}</small></div><span class="whatIfFixtureDate">${scenarioDateText(game)}</span></div>
     ${baseOutcome ? `<span class="whatIfBaseOverride">作成時入力：${outcomeLabel(baseOutcome, game)}${record ? '（Scenarioで変更）' : ''}</span>` : ''}
     <div class="whatIfOutcomeGrid">${button(WHAT_IF_OUTCOMES.HOME_WIN, `${teamName(game.homeTeamId)} 勝ち`)}${button(WHAT_IF_OUTCOMES.AWAY_WIN, `${teamName(game.awayTeamId)} 勝ち`)}${button(WHAT_IF_OUTCOMES.TIE, '引き分け')}${button(WHAT_IF_OUTCOMES.UNKNOWN, '未指定')}</div>
@@ -360,6 +424,7 @@ function renderWhatIfFixtureRow(entry) {
 
 function renderWhatIfFixtures() {
   if (!activeBaseContext || !activeScenario) return;
+  byId('whatIfFixtureList').querySelectorAll('[data-what-if-section]').forEach(details => whatIfFixtureExpansion.set(details.dataset.whatIfSection, details.open));
   const entries = activeBaseContext.remaining_fixtures.filter(entry => whatIfFilter === 'all' || entry.game.homeTeamId === TEAM_TIGERS || entry.game.awayTeamId === TEAM_TIGERS)
     .sort((left, right) => (left.game.date || '9999-12-31').localeCompare(right.game.date || '9999-12-31') || left.game.id.localeCompare(right.game.id));
   const groups = new Map();
@@ -370,9 +435,14 @@ function renderWhatIfFixtures() {
   }
   byId('whatIfFixtureList').innerHTML = [...groups].map(([key, fixtures], index) => {
     const title = key === 'pending' ? '振替日未定' : `${Number(key.slice(5))}月`;
-    const entered = fixtures.filter(entry => scenarioOverride(entry.game.id)?.outcome && scenarioOverride(entry.game.id).outcome !== WHAT_IF_OUTCOMES.UNKNOWN).length;
-    return `<details class="whatIfFixtureGroup" ${index === 0 ? 'open' : ''}><summary>${title}<small>仮定 ${entered} / ${fixtures.length}</small></summary><div class="whatIfFixtureGroupBody">${fixtures.map(renderWhatIfFixtureRow).join('')}</div></details>`;
+    const stateKey = `${whatIfFilter}:${key}`;
+    const open = whatIfFixtureExpansion.get(stateKey) ?? index === 0;
+    const entered = fixtures.filter(entry => scenarioOverride(entry.game.id)).length;
+    return `<details class="whatIfFixtureGroup" data-what-if-section="${stateKey}" ${open ? 'open' : ''}><summary>${title}<small>条件 ${entered} / ${fixtures.length}</small></summary><div class="whatIfFixtureGroupBody">${fixtures.map(renderWhatIfFixtureRow).join('')}</div></details>`;
   }).join('');
+  byId('whatIfFixtureList').querySelectorAll('[data-what-if-section]').forEach(details => details.addEventListener('toggle', () => {
+    if (details.isConnected) whatIfFixtureExpansion.set(details.dataset.whatIfSection, details.open);
+  }));
   byId('whatIfTigersOnly').classList.toggle('active', whatIfFilter === 'tigers');
   byId('whatIfAllGames').classList.toggle('active', whatIfFilter === 'all');
 }
@@ -380,7 +450,7 @@ function renderWhatIfFixtures() {
 function renderWhatIfSummary() {
   if (!activeScenario || !activeBaseContext) return;
   byId('whatIfBaseMeta').textContent = `基準：${activeScenario.base_snapshot_date}・${whatIfDirty ? '未保存の変更あり' : '保存済み'}`;
-  byId('whatIfAssumptionCount').textContent = `仮定：${assumptionCount()}試合`;
+  byId('whatIfAssumptionCount').textContent = `仮定：${assumptionCount()}試合・条件変更：${conditionChangeCount()}件`;
   byId('whatIfSimulationMeta').textContent = `${Number(activeScenario.simulation_settings.iterations).toLocaleString('ja-JP')}回・seed ${activeScenario.simulation_settings.random_seed}`;
   byId('saveWhatIfScenario').disabled = !whatIfDirty;
 }
@@ -402,8 +472,9 @@ function renderWhatIfComparison() {
   const tigersScenario = scenarioByTeam.get(TEAM_TIGERS);
   const tigersDelta = deltaByTeam.get(TEAM_TIGERS);
   byId('whatIfComparison').hidden = false;
-  byId('whatIfResultState').textContent = whatIfComparisonStale ? '条件変更あり' : '再計算済み';
-  byId('whatIfResultState').classList.toggle('stale', whatIfComparisonStale);
+  const stateLabel = {calculated: '再計算済み', stale: '条件変更あり', calculating: '計算中', failed: '計算失敗'};
+  byId('whatIfResultState').textContent = stateLabel[whatIfCalculationState] || '未計算';
+  byId('whatIfResultState').classList.toggle('stale', whatIfCalculationState !== 'calculated');
   byId('whatIfHeadlineResults').innerHTML = [
     ['優勝確率', percent(tigersScenario.championProbability), deltaText(tigersDelta.champion_probability)],
     ['CS確率', percent(tigersScenario.csProbability), deltaText(tigersDelta.cs_probability)],
@@ -427,21 +498,38 @@ function renderWhatIf() { renderWhatIfSummary(); renderWhatIfFixtures(); renderW
 
 async function calculateWhatIf() {
   if (!activeScenario || !activeBaseContext || whatIfCalculating) return;
+  const scenarioAtStart = activeScenario;
+  const baseContextAtStart = activeBaseContext;
+  const fingerprintAtStart = scenarioCalculationFingerprint(scenarioAtStart, baseContextAtStart);
   whatIfCalculating = true;
+  whatIfCalculationState = 'calculating';
   const button = byId('runWhatIfSimulation');
-  button.disabled = true; byId('whatIfRunStatus').textContent = 'What-ifを計算中...';
+  button.disabled = true; byId('whatIfRunStatus').classList.remove('error'); byId('whatIfRunStatus').textContent = 'What-ifを計算中...';
+  renderWhatIfComparison();
   await new Promise(resolve => setTimeout(resolve, 0));
   const started = performance.now();
   try {
-    const key = baselineKey(activeBaseContext, activeScenario.simulation_settings);
+    const key = baselineKey(baseContextAtStart, scenarioAtStart.simulation_settings);
     let baselineResult = baselineCache.get(key);
-    if (!baselineResult) { baselineResult = simulateBaseContext(activeBaseContext, activeScenario.simulation_settings); baselineCache.set(key, baselineResult); }
-    whatIfComparison = compareScenarioToBase(activeBaseContext, activeScenario, {baselineResult});
-    whatIfComparisonStale = false;
-    byId('whatIfRunStatus').textContent = `${whatIfComparison.scenario_result.iterations.toLocaleString('ja-JP')}回・${((performance.now() - started) / 1000).toFixed(2)}秒・仮定${assumptionCount()}試合`;
+    if (!baselineResult) { baselineResult = simulateBaseContext(baseContextAtStart, scenarioAtStart.simulation_settings); baselineCache.set(key, baselineResult); }
+    const comparison = compareScenarioToBase(baseContextAtStart, scenarioAtStart, {baselineResult});
+    const stillCurrent = activeScenario?.scenario_id === scenarioAtStart.scenario_id
+      && activeBaseContext?.base_context_id === baseContextAtStart.base_context_id
+      && scenarioCalculationFingerprint(activeScenario, activeBaseContext) === fingerprintAtStart;
+    if (!stillCurrent) return;
+    whatIfComparison = comparison;
+    whatIfCalculationState = 'calculated';
+    byId('whatIfRunStatus').textContent = `${whatIfComparison.scenario_result.iterations.toLocaleString('ja-JP')}回・${((performance.now() - started) / 1000).toFixed(2)}秒・仮定${assumptionCount()}試合・条件${conditionChangeCount()}件`;
     renderWhatIfComparison();
   } catch (error) {
-    console.error(error); byId('whatIfRunStatus').textContent = `計算できませんでした：${error.message}`;
+    const stillCurrent = activeScenario?.scenario_id === scenarioAtStart.scenario_id
+      && activeBaseContext?.base_context_id === baseContextAtStart.base_context_id;
+    if (stillCurrent) {
+      console.error(error); whatIfCalculationState = 'failed';
+      byId('whatIfRunStatus').classList.add('error');
+      byId('whatIfRunStatus').textContent = `計算できませんでした：${error.message}`;
+      renderWhatIfComparison();
+    }
   } finally { whatIfCalculating = false; button.disabled = false; }
 }
 

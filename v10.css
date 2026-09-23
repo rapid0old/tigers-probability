@@ -372,10 +372,15 @@ body.leagueSimulatorMode .historyDock{display:none!important}
 .whatIfRankDetails>summary{min-height:42px;padding:10px 0}
 .whatIfDialog{width:min(540px,calc(100% - 20px));max-height:calc(100dvh - 24px);overflow:auto;padding:16px;color:#eee;background:#18181b;border:1px solid #5d5d64;border-radius:8px}
 .whatIfDialog::backdrop{background:rgba(0,0,0,.76)}
+.whatIfDialogStatus{min-height:0;margin:0;color:#a8d8b4;font-size:12px;line-height:1.5}
+.whatIfDialogStatus:not(:empty){margin:0 0 10px;padding:8px;border-left:3px solid #62bd7d;background:#122019}
+.whatIfDialogStatus.error,.leagueRunStatus.error{color:#ffc2c2}
+.whatIfDialogStatus.error:not(:empty){border-left-color:#d86666;background:#2b1717}
 .whatIfCreateButton{width:100%;min-height:46px;margin-top:10px;border-radius:6px}
 .whatIfSavedHeading{margin:18px 0 8px;color:#d5d5da;font-size:12px;font-weight:850}
 .whatIfSavedList{display:grid;gap:7px}
 .whatIfSavedEmpty{padding:16px 4px;color:#909097;text-align:center;font-size:12px}
+.whatIfSavedError{color:#ffc2c2}
 .whatIfSavedRow{padding:10px;border:1px solid #3a3a40;background:#111113}
 .whatIfSavedMeta strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .whatIfSavedMeta span{display:block;margin-top:4px;color:#929299;font-size:10px}
