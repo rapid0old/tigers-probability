@@ -1,5 +1,5 @@
 import {LEAGUE_SNAPSHOT_2026} from './league-data-2026.mjs';
-import {CANCELED_OVERRIDE, GAME_RESULTS, LEAGUES, LeagueBaselineModel, SeasonSimulator} from './league-simulator-core.mjs?v=canceled-1';
+import {CANCELED_OVERRIDE, GAME_RESULTS, LEAGUES, LeagueBaselineModel, SeasonSimulator} from './league-simulator-core.mjs?v=production-v4.0.0-1';
 import {createBaseContext} from './what-if-base-context.mjs';
 import {
   WHAT_IF_OUTCOMES,

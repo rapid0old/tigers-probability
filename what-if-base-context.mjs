@@ -1,4 +1,4 @@
-import {SeasonSimulator} from './league-simulator-core.mjs';
+import {SeasonSimulator} from './league-simulator-core.mjs?v=production-v4.0.0-1';
 import {WHAT_IF_OUTCOMES} from './what-if-scenario.mjs';
 
 export const WHAT_IF_BASE_ARTIFACT_TYPE = 'LEAGUE_WHAT_IF_BASE_CONTEXT';

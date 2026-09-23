@@ -1,7 +1,7 @@
 import {
   prepareSeasonSimulation,
   simulatePreparedSeason,
-} from './league-simulator-core.mjs';
+} from './league-simulator-core.mjs?v=production-v4.0.0-1';
 import {validateBaseContext} from './what-if-base-context.mjs';
 import {
   resolveScenario,

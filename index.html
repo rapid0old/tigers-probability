@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="阪神確率">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./v10.css?v=production-v3.1.0-1">
+<link rel="stylesheet" href="./v10.css?v=production-v4.0.0-1">
 <title>阪神 試合確率チェッカー</title>
 <style>
 :root{--bg:#0f0f10;--card:#19191b;--card2:#222225;--text:#f6f6f6;--muted:#a9a9ae;--line:#333338;--accent:#f2d21b;--good:#61d37a;--bad:#ff6b6b;--blue:#67a8ff}
@@ -122,7 +122,7 @@ a{color:#b7cfff}
 </head>
 <body>
 <div class="wrap">
-<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v3.1.0</div></div></header>
+<header><div class="logo">虎</div><div><h1>阪神 試合確率チェッカー</h1><div class="sub">12球団・選手モデル v4.0.0</div></div></header>
 
 <nav class="appViewTabs" aria-label="表示画面">
   <button id="gameProbabilityTab" class="active" type="button" aria-selected="true">試合確率</button>
@@ -1516,7 +1516,7 @@ document.querySelectorAll('#probDock button').forEach(b=>b.onclick=()=>openProba
 loadStats();loadObservedLearning();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
-<script src="./app-v10.js?v=production-v3.1.0-1"></script>
-<script type="module" src="./league-simulator-ui.mjs?v=production-20260917-1"></script>
+<script src="./app-v10.js?v=production-v4.0.0-1"></script>
+<script type="module" src="./league-simulator-ui.mjs?v=production-v4.0.0-1"></script>
 </body>
 </html>
