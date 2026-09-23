@@ -297,7 +297,7 @@ a{color:#b7cfff}
 <footer>
 得点期待値のベースライン：<a href="https://baseball.piupapp.com/run-expectancy" target="_blank" rel="noopener noreferrer">Baseball Explorer</a>（2023–2025 NPB 24状況集計）。<br>
 内蔵選手名：<a href="https://npb.jp/bis/teams/index.html" target="_blank" rel="noopener noreferrer">NPB.jp 2026年度選手一覧</a>、<a href="https://m.hanshintigers.jp/data/player_list/2026" target="_blank" rel="noopener noreferrer">阪神タイガース公式 2026選手プロフィール</a>。<br>
-公式選手成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式 2026個人成績</a>と日別投打成績を2026年9月17日終了試合まで反映。通常更新は前回以降の試合IDだけを追加します。<br>
+公式選手成績：<a href="https://npb.jp/bis/2026/stats/" target="_blank" rel="noopener noreferrer">NPB公式 2026個人成績</a>と日別投打成績を2026年9月23日終了試合まで反映。通常更新は前回以降の試合IDだけを追加します。<br>
 左右・球場補正：NPB公式の投打情報、2024年以降のNPB公式試合結果、<a href="https://www.mlb.com/news/takeaways-from-first-half-of-2026-season" target="_blank" rel="noopener noreferrer">MLB公式 2025左右別wOBA公開集計</a>を保守的に縮約して使用。<br>
 カウント補正の方向性：<a href="https://www.mlb.com/glossary/statcast/catcher-framing" target="_blank" rel="noopener noreferrer">MLB公式 Statcast Glossary</a>の公開例（2025年の1-0後と0-1後のOPS差）を確認し、NPB実測値とは区別した保守的な試用係数として実装しています。<br>
 非公式・私的利用向け。阪神タイガース、NPBとは無関係です。
@@ -310,10 +310,10 @@ a{color:#b7cfff}
     <div>
       <span class="leagueEyebrow">League Baseline Model v1</span>
       <h2>優勝・CS確率</h2>
-      <p>2026年9月17日終了時点の公式結果と残り日程を、12球団共通の固定Eloで計算します。</p>
+      <p>2026年9月23日終了時点の公式結果と残り日程を、12球団共通の固定Eloで計算します。</p>
     </div>
     <div class="leagueHeroActions">
-      <div class="leagueSnapshotStatus"><span>基準日</span><strong>2026.09.17</strong></div>
+      <div class="leagueSnapshotStatus"><span>基準日</span><strong>2026.09.23</strong></div>
       <button id="openWhatIf" class="whatIfEntry" type="button">What-if</button>
     </div>
   </section>
@@ -325,7 +325,7 @@ a{color:#b7cfff}
     </div>
     <div class="leagueRunControls">
       <label>計算回数<select id="leagueIterations"><option value="10000">10,000回</option><option value="50000" selected>50,000回</option><option value="100000">100,000回</option></select></label>
-      <label>乱数seed<input id="leagueRandomSeed" type="text" value="baseline-2026-09-17" autocomplete="off"></label>
+      <label>乱数seed<input id="leagueRandomSeed" type="text" value="baseline-2026-09-23" autocomplete="off"></label>
       <button id="runLeagueSimulation" class="primary" type="button">再計算</button>
     </div>
     <div id="leagueRunStatus" class="leagueRunStatus" aria-live="polite">計算準備中</div>
@@ -438,8 +438,8 @@ a{color:#b7cfff}
 </dialog>
 <div id="toast" class="toast"></div>
 
-<script src="./rosters.js?v=production-20260917-1"></script>
-<script src="./stats-v13.js?v=production-20260917-1"></script>
+<script src="./rosters.js?v=production-20260923-1"></script>
+<script src="./stats-v13.js?v=production-20260923-1"></script>
 <script>
 const SEASON = 2026;
 const TEAM_T = 'Tigers';
@@ -454,7 +454,7 @@ const TEAM_NAME = Object.fromEntries(TEAMS);
 const AVG_LINEUP_ID='__avg__';
 const PITCHER_LINEUP_ID='__pitcher__';
 const OPP_LINEUP_STORAGE='tigersOpponentLineupsV1';
-const BUILTIN_SNAPSHOT_DATE=window.NPB_2026_STATS_SNAPSHOT?.snapshotDate||'2026-09-17';
+const BUILTIN_SNAPSHOT_DATE=window.NPB_2026_STATS_SNAPSHOT?.snapshotDate||'2026-09-23';
 const LEARNING_STORAGE='tigersObservedLearningV1';
 const LEARNING_EVENTS=['1B','2B','3B','HR','BB','K','OUT'];
 const LEARNING_PRIOR_PA=48;
@@ -1517,6 +1517,6 @@ loadStats();loadObservedLearning();update();
 if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 </script>
 <script src="./app-v10.js?v=production-v4.0.1-1"></script>
-<script type="module" src="./league-simulator-ui.mjs?v=production-v4.0.1-1"></script>
+<script type="module" src="./league-simulator-ui.mjs?v=production-20260923-1"></script>
 </body>
 </html>

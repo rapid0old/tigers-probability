@@ -2,8 +2,8 @@
 export const LEAGUE_SNAPSHOT_2026 = {
   "schemaVersion": 1,
   "season": 2026,
-  "through": "2026-09-17",
-  "generatedAt": "2026-09-17T13:48:14.844Z",
+  "through": "2026-09-23",
+  "generatedAt": "2026-09-23T15:52:57.267Z",
   "source": "NPB.jp 2026 regular-season schedule detail pages",
   "sourceUrls": [
     "https://npb.jp/games/2026/schedule_03_detail.html",
@@ -25,7 +25,13 @@ export const LEAGUE_SNAPSHOT_2026 = {
     "https://npb.jp/scores/2026/0917/t-c-20/box.html",
     "https://npb.jp/scores/2026/0917/f-l-25/box.html",
     "https://npb.jp/scores/2026/0917/m-e-22/box.html",
-    "https://npb.jp/scores/2026/0917/b-h-23/box.html"
+    "https://npb.jp/scores/2026/0917/b-h-23/box.html",
+    "https://npb.jp/scores/2026/0923/s-t-23/box.html",
+    "https://npb.jp/scores/2026/0923/db-d-25/box.html",
+    "https://npb.jp/scores/2026/0923/c-g-22/box.html",
+    "https://npb.jp/scores/2026/0923/f-e-24/box.html",
+    "https://npb.jp/scores/2026/0923/m-b-25/box.html",
+    "https://npb.jp/scores/2026/0923/h-l-25/box.html"
   ],
   "teams": [
     {
@@ -9540,11 +9546,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "DB",
       "awayTeamId": "S",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 1,
+      "awayScore": 3,
       "venue": "横 浜",
-      "officialPath": null
+      "officialPath": "/scores/2026/0918/db-s-24/"
     },
     {
       "id": "npb-2026-0918-G-D-1",
@@ -9552,11 +9558,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "G",
       "awayTeamId": "D",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 2,
+      "awayScore": 0,
       "venue": "東京ドーム",
-      "officialPath": null
+      "officialPath": "/scores/2026/0918/g-d-24/"
     },
     {
       "id": "npb-2026-0918-T-C-3",
@@ -9564,11 +9570,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "T",
       "awayTeamId": "C",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 2,
+      "awayScore": 1,
       "venue": "甲子園",
-      "officialPath": null
+      "officialPath": "/scores/2026/0918/t-c-21/"
     },
     {
       "id": "npb-2026-0919-DB-S-2",
@@ -9576,11 +9582,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "DB",
       "awayTeamId": "S",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 5,
+      "awayScore": 3,
       "venue": "横 浜",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/db-s-25/"
     },
     {
       "id": "npb-2026-0919-E-H-5",
@@ -9588,11 +9594,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "E",
       "awayTeamId": "H",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 5,
+      "awayScore": 2,
       "venue": "楽天モバイル",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/e-h-21/"
     },
     {
       "id": "npb-2026-0919-F-B-4",
@@ -9600,11 +9606,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "F",
       "awayTeamId": "B",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 4,
+      "awayScore": 7,
       "venue": "エスコンＦ",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/f-b-22/"
     },
     {
       "id": "npb-2026-0919-G-D-1",
@@ -9612,11 +9618,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "G",
       "awayTeamId": "D",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 14,
+      "awayScore": 1,
       "venue": "東京ドーム",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/g-d-25/"
     },
     {
       "id": "npb-2026-0919-M-L-6",
@@ -9624,11 +9630,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "M",
       "awayTeamId": "L",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 2,
+      "awayScore": 4,
       "venue": "ZOZOマリン",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/m-l-21/"
     },
     {
       "id": "npb-2026-0919-T-C-3",
@@ -9636,11 +9642,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "T",
       "awayTeamId": "C",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 1,
+      "awayScore": 5,
       "venue": "甲子園",
-      "officialPath": null
+      "officialPath": "/scores/2026/0919/t-c-22/"
     },
     {
       "id": "npb-2026-0920-D-C-2",
@@ -9648,11 +9654,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "D",
       "awayTeamId": "C",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 8,
+      "awayScore": 5,
       "venue": "バンテリンドーム",
-      "officialPath": null
+      "officialPath": "/scores/2026/0920/d-c-23/"
     },
     {
       "id": "npb-2026-0920-E-H-5",
@@ -9660,11 +9666,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "E",
       "awayTeamId": "H",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 5,
+      "awayScore": 3,
       "venue": "楽天モバイル",
-      "officialPath": null
+      "officialPath": "/scores/2026/0920/e-h-22/"
     },
     {
       "id": "npb-2026-0920-F-B-4",
@@ -9672,11 +9678,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "F",
       "awayTeamId": "B",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 6,
+      "awayScore": 9,
       "venue": "エスコンＦ",
-      "officialPath": null
+      "officialPath": "/scores/2026/0920/f-b-23/"
     },
     {
       "id": "npb-2026-0920-G-S-1",
@@ -9684,23 +9690,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "G",
       "awayTeamId": "S",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 3,
+      "awayScore": 2,
       "venue": "東京ドーム",
-      "officialPath": null
-    },
-    {
-      "id": "npb-2026-0920-M-L-6",
-      "date": "2026-09-20",
-      "originalDate": null,
-      "homeTeamId": "M",
-      "awayTeamId": "L",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
-      "venue": "ZOZOマリン",
-      "officialPath": null
+      "officialPath": "/scores/2026/0920/g-s-23/"
     },
     {
       "id": "npb-2026-0920-T-DB-3",
@@ -9708,11 +9702,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "T",
       "awayTeamId": "DB",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 8,
+      "awayScore": 1,
       "venue": "甲子園",
-      "officialPath": null
+      "officialPath": "/scores/2026/0920/t-db-21/"
     },
     {
       "id": "npb-2026-0921-D-C-1",
@@ -9720,23 +9714,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "D",
       "awayTeamId": "C",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 10,
+      "awayScore": 0,
       "venue": "バンテリンドーム",
-      "officialPath": null
-    },
-    {
-      "id": "npb-2026-0921-E-H-4",
-      "date": "2026-09-21",
-      "originalDate": null,
-      "homeTeamId": "E",
-      "awayTeamId": "H",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
-      "venue": "楽天モバイル",
-      "officialPath": null
+      "officialPath": "/scores/2026/0921/d-c-24/"
     },
     {
       "id": "npb-2026-0921-F-B-3",
@@ -9744,23 +9726,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "F",
       "awayTeamId": "B",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 5,
+      "awayScore": 3,
       "venue": "エスコンＦ",
-      "officialPath": null
-    },
-    {
-      "id": "npb-2026-0921-M-L-5",
-      "date": "2026-09-21",
-      "originalDate": null,
-      "homeTeamId": "M",
-      "awayTeamId": "L",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
-      "venue": "ZOZOマリン",
-      "officialPath": null
+      "officialPath": "/scores/2026/0921/f-b-24/"
     },
     {
       "id": "npb-2026-0921-T-DB-2",
@@ -9768,11 +9738,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "T",
       "awayTeamId": "DB",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 3,
+      "awayScore": 2,
       "venue": "甲子園",
-      "officialPath": null
+      "officialPath": "/scores/2026/0921/t-db-22/"
     },
     {
       "id": "npb-2026-0922-C-G-3",
@@ -9780,11 +9750,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "C",
       "awayTeamId": "G",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 2,
+      "awayScore": 1,
       "venue": "マツダスタジアム",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/c-g-21/"
     },
     {
       "id": "npb-2026-0922-DB-D-2",
@@ -9792,11 +9762,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "DB",
       "awayTeamId": "D",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 7,
+      "awayScore": 3,
       "venue": "横 浜",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/db-d-24/"
     },
     {
       "id": "npb-2026-0922-F-E-4",
@@ -9804,11 +9774,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "F",
       "awayTeamId": "E",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 6,
+      "awayScore": 5,
       "venue": "エスコンＦ",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/f-e-23/"
     },
     {
       "id": "npb-2026-0922-H-L-6",
@@ -9816,11 +9786,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "H",
       "awayTeamId": "L",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 6,
+      "awayScore": 5,
       "venue": "みずほPayPay",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/h-l-24/"
     },
     {
       "id": "npb-2026-0922-M-B-5",
@@ -9828,11 +9798,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "M",
       "awayTeamId": "B",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 4,
+      "awayScore": 6,
       "venue": "ZOZOマリン",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/m-b-24/"
     },
     {
       "id": "npb-2026-0922-S-T-1",
@@ -9840,11 +9810,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "S",
       "awayTeamId": "T",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 7,
+      "awayScore": 9,
       "venue": "神 宮",
-      "officialPath": null
+      "officialPath": "/scores/2026/0922/s-t-22/"
     },
     {
       "id": "npb-2026-0923-C-G-3",
@@ -9852,11 +9822,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "C",
       "awayTeamId": "G",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 1,
+      "awayScore": 2,
       "venue": "マツダスタジアム",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/c-g-22/"
     },
     {
       "id": "npb-2026-0923-DB-D-2",
@@ -9864,11 +9834,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "DB",
       "awayTeamId": "D",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 4,
+      "awayScore": 3,
       "venue": "横 浜",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/db-d-25/"
     },
     {
       "id": "npb-2026-0923-F-E-4",
@@ -9876,11 +9846,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "F",
       "awayTeamId": "E",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 3,
+      "awayScore": 5,
       "venue": "エスコンＦ",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/f-e-24/"
     },
     {
       "id": "npb-2026-0923-H-L-6",
@@ -9888,11 +9858,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "H",
       "awayTeamId": "L",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 10,
+      "awayScore": 3,
       "venue": "みずほPayPay",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/h-l-25/"
     },
     {
       "id": "npb-2026-0923-M-B-5",
@@ -9900,11 +9870,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "M",
       "awayTeamId": "B",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 0,
+      "awayScore": 1,
       "venue": "ZOZOマリン",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/m-b-25/"
     },
     {
       "id": "npb-2026-0923-S-T-1",
@@ -9912,11 +9882,11 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "originalDate": null,
       "homeTeamId": "S",
       "awayTeamId": "T",
-      "status": "SCHEDULED",
-      "homeScore": null,
-      "awayScore": null,
+      "status": "FINAL",
+      "homeScore": 4,
+      "awayScore": 8,
       "venue": "神 宮",
-      "officialPath": null
+      "officialPath": "/scores/2026/0923/s-t-23/"
     },
     {
       "id": "npb-2026-0924-C-G-1",
@@ -10423,68 +10393,104 @@ export const LEAGUE_SNAPSHOT_2026 = {
       "awayScore": null,
       "venue": "甲子園",
       "officialPath": null
+    },
+    {
+      "id": "npb-2026-0920-M-L-6",
+      "date": null,
+      "originalDate": "2026-09-20",
+      "homeTeamId": "M",
+      "awayTeamId": "L",
+      "status": "PENDING_RESCHEDULE",
+      "homeScore": null,
+      "awayScore": null,
+      "venue": "ZOZOマリン",
+      "officialPath": null
+    },
+    {
+      "id": "npb-2026-0921-E-H-4",
+      "date": null,
+      "originalDate": "2026-09-21",
+      "homeTeamId": "E",
+      "awayTeamId": "H",
+      "status": "PENDING_RESCHEDULE",
+      "homeScore": null,
+      "awayScore": null,
+      "venue": "楽天モバイル",
+      "officialPath": null
+    },
+    {
+      "id": "npb-2026-0921-M-L-5",
+      "date": null,
+      "originalDate": "2026-09-21",
+      "homeTeamId": "M",
+      "awayTeamId": "L",
+      "status": "PENDING_RESCHEDULE",
+      "homeScore": null,
+      "awayScore": null,
+      "venue": "ZOZOマリン",
+      "officialPath": null
     }
   ],
   "teamGameCounts": {
     "T": {
-      "final": 128,
-      "scheduled": 13,
+      "final": 134,
+      "scheduled": 7,
       "pendingReschedule": 2
     },
     "DB": {
-      "final": 131,
-      "scheduled": 12,
+      "final": 137,
+      "scheduled": 6,
       "pendingReschedule": 0
     },
     "G": {
-      "final": 131,
-      "scheduled": 12,
+      "final": 136,
+      "scheduled": 7,
       "pendingReschedule": 0
     },
     "D": {
-      "final": 133,
-      "scheduled": 10,
+      "final": 139,
+      "scheduled": 4,
       "pendingReschedule": 0
     },
     "C": {
-      "final": 127,
-      "scheduled": 14,
+      "final": 133,
+      "scheduled": 8,
       "pendingReschedule": 2
     },
     "S": {
-      "final": 130,
-      "scheduled": 13,
+      "final": 135,
+      "scheduled": 8,
       "pendingReschedule": 0
     },
     "H": {
-      "final": 132,
-      "scheduled": 11,
-      "pendingReschedule": 0
+      "final": 136,
+      "scheduled": 6,
+      "pendingReschedule": 1
     },
     "F": {
-      "final": 133,
-      "scheduled": 10,
+      "final": 138,
+      "scheduled": 5,
       "pendingReschedule": 0
     },
     "B": {
-      "final": 133,
-      "scheduled": 10,
+      "final": 138,
+      "scheduled": 5,
       "pendingReschedule": 0
     },
     "E": {
-      "final": 129,
-      "scheduled": 14,
-      "pendingReschedule": 0
+      "final": 133,
+      "scheduled": 9,
+      "pendingReschedule": 1
     },
     "L": {
-      "final": 133,
-      "scheduled": 10,
-      "pendingReschedule": 0
+      "final": 136,
+      "scheduled": 5,
+      "pendingReschedule": 2
     },
     "M": {
-      "final": 128,
-      "scheduled": 15,
-      "pendingReschedule": 0
+      "final": 131,
+      "scheduled": 10,
+      "pendingReschedule": 2
     }
   }
 };

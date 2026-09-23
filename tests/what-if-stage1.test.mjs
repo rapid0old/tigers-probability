@@ -380,25 +380,26 @@ test('29. 公式確定済み試合はScenario override対象にならない', ()
   );
 });
 
-test('30. 実snapshotは784試合を集計し74fixtureだけをBaseへ保存する', () => {
+test('30. 実snapshotは813試合を集計し45fixtureだけをBaseへ保存する', () => {
   const liveSnapshot = structuredClone(LEAGUE_SNAPSHOT_2026);
   const base = createBaseContext({
     snapshot: liveSnapshot,
     probabilityModel: new LeagueBaselineModel(liveSnapshot),
-    baseDatasetId: 'npb-2026-20260917-v1',
+    baseDatasetId: 'npb-2026-20260923-v1',
   }, {now: () => CREATED_AT});
   const finals = LEAGUE_SNAPSHOT_2026.games.filter(game => game.status === 'FINAL');
   const pending = base.remaining_fixtures.filter(entry => entry.game.status === 'PENDING_RESCHEDULE');
-  assert.equal(finals.length, 784);
+  assert.equal(LEAGUE_SNAPSHOT_2026.through, '2026-09-23');
+  assert.equal(finals.length, 813);
   assert.equal(LEAGUE_SNAPSHOT_2026.games.length, 858);
-  assert.equal(base.remaining_fixtures.length, 74);
-  assert.equal(pending.length, 2);
+  assert.equal(base.remaining_fixtures.length, 45);
+  assert.equal(pending.length, 5);
   assert.equal(base.teams.length, 12);
   const recordedGames = base.official_state.wins.reduce((sum, value) => sum + value, 0)
     + base.official_state.ties.reduce((sum, value) => sum + value, 0) / 2;
-  assert.equal(recordedGames, 784);
+  assert.equal(recordedGames, 813);
   liveSnapshot.games[0].homeScore = 999;
   liveSnapshot.games.length = 0;
-  assert.equal(base.remaining_fixtures.length, 74);
+  assert.equal(base.remaining_fixtures.length, 45);
   assert.equal(validateBaseContext(base), true);
 });
